@@ -1,5 +1,5 @@
 name: konkur_tracker
-description: A study log app for Dr. Ashkboos students.
+description: A modern study tracker app for Dr. Ashkboos students.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,7 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.2
+  shared_preferences: ^2.2.2
+  share_plus: ^7.2.1
 
 flutter:
   uses-material-design: true
