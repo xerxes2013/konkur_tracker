@@ -9,32 +9,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # استفاده از نسخه جدید سازگار با گیت‌هاب
       - uses: actions/checkout@v4
 
-      # ستاپ جاوا ۱۷ با اکشن v4 برای رفع وارنینگ
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # ستاپ فلاتر پایدار
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.19.6'
           channel: 'stable'
 
-      # ساخت فایل‌های نیتیو اندروید با تنظیم نام پکیج
-      - name: Create Native Platform Files
+      - name: Generate Android Files
         run: |
           flutter create . --platforms=android --org=com.ashkboos.tracker
 
-      # افزایش خودکار حداقل نسخه اندروید (برای هماهنگی با پکیج‌های شیرینگ و اسکرین‌تایم)
-      - name: Configure Android SDK versions
+      # حل قطعی ارور تداخل نسخه‌های کاتلین (Duplicate Class)
+      - name: Fix Kotlin Duplicate Classes
         run: |
-          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+          echo "configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22' } }" >> android/app/build.gradle
 
       - name: Get Dependencies
         run: flutter pub get
@@ -45,5 +40,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KonkurTracker-Release-APK
+          name: KonkurTracker-App
           path: build/app/outputs/flutter-apk/app-release.apk
