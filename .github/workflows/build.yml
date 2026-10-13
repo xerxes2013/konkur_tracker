@@ -17,19 +17,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # استفاده از نسخه ۳.۲۴ فلاتر که با کاتلین جدید کاملاً سازگار است
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Generate Android Files
-        run: |
-          flutter create . --platforms=android --org=com.ashkboos.tracker
-
-      # حل قطعی ارور تداخل نسخه‌های کاتلین (Duplicate Class)
-      - name: Fix Kotlin Duplicate Classes
-        run: |
-          echo "configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22' } }" >> android/app/build.gradle
+      - name: Create Native Platform Files
+        run: flutter create . --platforms=android --org=com.ashkboos.tracker
 
       - name: Get Dependencies
         run: flutter pub get
@@ -37,7 +32,7 @@ jobs:
       - name: Build APK Release
         run: flutter build apk --release
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: KonkurTracker-App
