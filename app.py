@@ -5,7 +5,7 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import io
 import random
 
@@ -13,14 +13,14 @@ import random
 # ۱. تنظیمات صفحه
 # ═══════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="سامانه هوشمند آکادمی ۲۰",
+    page_title="سامانه هوشمند آکادمی ۲۰ | دکتر اشکبوس",
     page_icon="👑",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ═══════════════════════════════════════════════════════
-# ۲. استایل‌های پیشرفته + رفع مشکل Dropdown
+# ۲. استایل‌های نئونی فوق‌مدرن و انیمیشن‌های سایبرپانک
 # ═══════════════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -32,331 +32,125 @@ st.markdown("""
         text-align: right;
     }
 
-    @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    @keyframes neonGlow {
+        0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2); }
+        50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.6), inset 0 0 20px rgba(168, 85, 247, 0.3); }
     }
-    @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); }
-        50% { box-shadow: 0 0 45px rgba(56, 189, 248, 0.75); }
+
+    @keyframes floatEffect {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
     }
-    @keyframes shimmer {
-        0% { background-position: -300% 0; }
-        100% { background-position: 300% 0; }
-    }
-    
-    /* پس‌زمینه کهکشانی */
+
     .stApp {
-        background: radial-gradient(circle at 15% 5%, #1e2447 0%, #0b0f19 42%, #05070f 100%) !important;
+        background: radial-gradient(circle at 10% 10%, #0d1527 0%, #060913 60%, #020408 100%) !important;
         color: #ffffff !important;
     }
 
-    .stApp::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background-image:
-            radial-gradient(2px 2px at 20% 30%, rgba(56,189,248,0.45), transparent),
-            radial-gradient(1.5px 1.5px at 65% 70%, rgba(74,222,128,0.4), transparent),
-            radial-gradient(1.5px 1.5px at 82% 22%, rgba(250,204,21,0.4), transparent),
-            radial-gradient(1px 1px at 40% 82%, rgba(248,113,113,0.4), transparent),
-            radial-gradient(1.2px 1.2px at 12% 65%, rgba(168,85,247,0.4), transparent);
-        background-size: 550px 550px, 420px 420px, 630px 630px, 320px 320px, 480px 480px;
-        pointer-events: none;
-        z-index: 0;
-        opacity: 0.7;
-    }
-
-    /* هدر */
+    /* هدر کهکشانی */
     .hero-header {
         position: relative;
-        background: linear-gradient(135deg, rgba(17,24,39,0.9) 0%, rgba(30,41,59,0.85) 100%);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border-radius: 22px;
-        padding: 26px 22px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+        backdrop-filter: blur(16px);
+        border-radius: 24px;
+        padding: 24px;
         text-align: center;
-        margin-bottom: 26px;
-        overflow: hidden;
-        border: 1px solid rgba(56, 189, 248, 0.25);
-        box-shadow: 0 10px 40px rgba(2, 132, 199, 0.18), inset 0 1px 0 rgba(255,255,255,0.06);
-    }
-
-    .hero-header::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        border-radius: 22px;
-        padding: 2px;
-        background: linear-gradient(90deg, #38bdf8, #4ade80, #facc15, #f472b6, #38bdf8);
-        background-size: 300% 100%;
-        animation: gradientShift 8s linear infinite;
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-        pointer-events: none;
-        opacity: 0.85;
+        margin-bottom: 24px;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        animation: neonGlow 5s infinite alternate;
     }
 
     .hero-title {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 900;
-        background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+        background: linear-gradient(90deg, #38bdf8, #c084fc, #f472b6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0 0 6px 0;
+        margin-bottom: 4px;
     }
 
-    .hero-sub { color: #cbd5e1 !important; font-size: 14px; margin: 0; }
-
-    /* کارت شاخص */
-    .metric-card {
-        position: relative;
-        background: linear-gradient(145deg, rgba(17,24,39,0.85), rgba(30,41,59,0.75));
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(56, 189, 248, 0.28);
+    /* کارت‌های KPI تحلیلی */
+    .stat-card {
+        background: linear-gradient(145deg, rgba(17, 24, 39, 0.85), rgba(30, 41, 59, 0.7));
+        border: 1px solid rgba(56, 189, 248, 0.25);
         border-radius: 18px;
-        padding: 18px 14px;
+        padding: 16px;
         text-align: center;
-        transition: all 0.35s cubic-bezier(.2,.9,.3,1.3);
+        transition: 0.3s;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: #38bdf8;
+        box-shadow: 0 12px 30px rgba(56, 189, 248, 0.3);
+    }
+
+    /* XP و سطح‌بندی */
+    .xp-bar-container {
+        background: #1e293b;
+        border-radius: 12px;
+        height: 18px;
+        width: 100%;
         overflow: hidden;
-        box-shadow: 0 8px 26px rgba(0,0,0,0.35);
+        margin-top: 6px;
+        border: 1px solid rgba(255,255,255,0.1);
     }
-    .metric-card:hover {
-        transform: translateY(-6px) scale(1.02);
-        border-color: rgba(56, 189, 248, 0.7);
-        box-shadow: 0 14px 36px rgba(56, 189, 248, 0.35);
-    }
-    .metric-num {
-        font-size: 30px;
-        font-weight: 900;
-        background: linear-gradient(90deg, #38bdf8, #4ade80);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
-    }
-    .metric-txt { font-size: 12.5px; color: #94a3b8 !important; margin-top: 6px; }
-    .metric-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-
-    /* Streak */
-    .streak-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(90deg, rgba(251,146,60,0.15), rgba(248,113,113,0.15));
-        border: 1px solid rgba(251,146,60,0.55);
-        padding: 10px 18px;
-        border-radius: 14px;
-        font-weight: 800;
-        color: #fb923c !important;
-        animation: pulseGlow 2.5s ease-in-out infinite;
+    .xp-bar-fill {
+        background: linear-gradient(90deg, #06b6d4, #a855f7);
+        height: 100%;
+        border-radius: 12px;
+        transition: width 0.8s ease-in-out;
     }
 
-    label, p, span, h1, h2, h3, h4, div {
-        color: #ffffff !important;
-        font-weight: 600;
+    /* تایمر پومودورو */
+    .pomo-box {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px dashed #38bdf8;
+        border-radius: 16px;
+        padding: 14px;
+        text-align: center;
+        margin-bottom: 18px;
     }
 
-    /* ورودی‌ها */
-    input, textarea, select {
-        background-color: rgba(30,41,59,0.85) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(56,189,248,0.35) !important;
-        border-radius: 12px !important;
-        transition: 0.25s;
-    }
-    input:focus, textarea:focus {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 0 3px rgba(56,189,248,0.18) !important;
-    }
-
-    /* دکمه‌ها */
-    .stButton > button {
-        background: linear-gradient(90deg, #0284c7, #7c3aed) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        font-weight: 800 !important;
-        padding: 10px 18px !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 6px 20px rgba(124,58,237,0.28) !important;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px) scale(1.01);
-        box-shadow: 0 10px 30px rgba(124,58,237,0.55) !important;
-        filter: brightness(1.08);
-    }
-
-    /* دکمه تلگرام */
+    /* دکمه اختصاصی تلگرام با افکت پالس */
     .tg-button {
         display: block;
         width: 100%;
-        background: linear-gradient(90deg, #0088cc, #005f8f);
+        background: linear-gradient(90deg, #0284c7, #2563eb);
         color: #ffffff !important;
         text-align: center;
         font-size: 16px;
         font-weight: 800;
         padding: 14px;
-        border-radius: 12px;
+        border-radius: 14px;
         text-decoration: none;
-        box-shadow: 0 6px 18px rgba(2,132,199,0.45);
-        margin-top: 15px;
-        transition: all 0.3s;
-        position: relative;
-        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+        transition: 0.3s;
+        margin-top: 10px;
     }
     .tg-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 28px rgba(2,132,199,0.75);
-        filter: brightness(1.1);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(2, 132, 199, 0.7);
     }
 
-    /* تب‌ها */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(17,24,39,0.6);
-        padding: 8px;
-        border-radius: 14px;
-        border: 1px solid rgba(56,189,248,0.18);
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 10px !important;
-        padding: 10px 16px !important;
-        font-weight: 700 !important;
-        transition: 0.25s;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(90deg, #0284c7, #7c3aed) !important;
-        color: #ffffff !important;
-    }
-
-    /* اسکرول‌بار */
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: #0b0f19; }
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #38bdf8, #7c3aed);
-        border-radius: 10px;
-    }
-
-    /* گلس کارت */
-    .glass-card {
-        background: rgba(17,24,39,0.72);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(56,189,248,0.22);
-        border-radius: 16px;
-        padding: 18px;
-        margin-bottom: 14px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.28);
-    }
-
-    /* بج‌ها */
-    .badge {
-        display: inline-block;
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-weight: 800;
-        font-size: 13px;
-        margin: 3px;
-        border: 1px solid;
-    }
-    .badge-bronze { color:#fb923c; border-color:#fb923c; background:rgba(251,146,60,0.12); }
-    .badge-silver { color:#cbd5e1; border-color:#cbd5e1; background:rgba(203,213,225,0.12); }
-    .badge-gold   { color:#facc15; border-color:#facc15; background:rgba(250,204,21,0.12); }
-    .badge-diamond{ color:#38bdf8; border-color:#38bdf8; background:rgba(56,189,248,0.12); }
-
-    /* ═══════════════════════════════════════════════════
-       🎯 رفع مشکل دیده نشدن متن Dropdown/Selectbox
-       ═══════════════════════════════════════════════════ */
+    /* اصلاح وضوح Selectbox و فیلدها */
     div[data-baseweb="select"] > div {
         background-color: #1e293b !important;
-        color: #ffffff !important;
-        border-color: rgba(56,189,248,0.35) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
     }
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] div,
-    div[data-baseweb="select"] input {
-        color: #ffffff !important;
-        background-color: transparent !important;
-    }
-
-    /* منوی بازشوی سلکت‌باکس */
-    div[data-baseweb="popover"],
-    div[data-baseweb="popover"] *,
-    div[data-baseweb="menu"],
-    div[data-baseweb="menu"] *,
-    ul[role="listbox"],
-    ul[role="listbox"] *,
-    div[role="listbox"],
-    div[role="listbox"] *,
-    li[role="option"],
-    li[role="option"] * {
+    input, textarea {
         background-color: #1e293b !important;
-        color: #ffffff !important;
-    }
-    ul[role="listbox"] li:hover,
-    div[role="option"]:hover,
-    li[role="option"]:hover {
-        background-color: #0284c7 !important;
-        color: #ffffff !important;
-    }
-    li[aria-selected="true"],
-    div[aria-selected="true"] {
-        background-color: #0369a1 !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-    }
-
-    /* دکمه‌های StepUp/StepDown عدد */
-    button[data-testid="stNumberInputStepUp"],
-    button[data-testid="stNumberInputStepDown"] {
-        background-color: #1e293b !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(56,189,248,0.35) !important;
-    }
-
-    /* Date Picker */
-    div[data-baseweb="calendar"],
-    div[data-baseweb="calendar"] * {
-        background-color: #1e293b !important;
-        color: #ffffff !important;
-    }
-    div[data-baseweb="calendar"] button:hover {
-        background-color: #0284c7 !important;
-    }
-    div[data-baseweb="calendar"] [aria-selected="true"] {
-        background-color: #0284c7 !important;
-        color: #ffffff !important;
-    }
-
-    /* اسلایدر ساعت — پیش‌نمایش */
-    .time-preview {
-        text-align: center;
-        background: linear-gradient(90deg, #0284c7, #7c3aed);
-        color: #fff;
-        font-weight: 900;
-        font-size: 17px;
-        padding: 8px 12px;
-        border-radius: 10px;
-        margin-top: 4px;
-        letter-spacing: 1.5px;
-        box-shadow: 0 4px 15px rgba(2,132,199,0.4);
-        animation: pulseGlow 3s ease-in-out infinite;
-    }
-
-    .time-label {
-        font-weight: 700;
-        color: #38bdf8 !important;
-        font-size: 13.5px;
-        margin-bottom: 4px;
+        color: white !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════
-# ۳. دیتابیس
+# ۳. دیتابیس لوکال SQLite
 # ═══════════════════════════════════════════════════════
 conn = sqlite3.connect("konkur_academy.db", check_same_thread=False)
 c = conn.cursor()
@@ -364,536 +158,314 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute('''CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, report_date DATE,
     satisfaction INT, study_hours REAL, total_tests INT, correct_tests INT,
-    wrong_tests INT, percentage REAL, screen_time TEXT, social_time TEXT, details TEXT
+    wrong_tests INT, percentage REAL, screen_time TEXT, social_time TEXT, details TEXT, subjects_json TEXT
 )''')
 conn.commit()
 
 # ═══════════════════════════════════════════════════════
-# ۴. جملات انگیزشی
+# ۴. سیستم گیمیفیکیشن و سطح‌بندی (XP & Rank)
 # ═══════════════════════════════════════════════════════
-MOTIVATIONS = [
-    "🌟 هر تستی که می‌زنی، یک قدم به رویاهات نزدیک‌تر می‌شی.",
-    "🔥 موفقیت حاصل تکرارهای کوچک روزانه است، نه یک‌شبه معجزه.",
-    "🚀 امروزت رو بساز، چون فردا از همین امروزها ساخته می‌شه.",
-    "💎 فشارِ امروز، الماسِ فردا رو می‌سازه.",
-    "🎯 تمرکز روی پیشرفت، نه کمال. همین کافیه.",
-    "⚡ تو از دیروز خودت قوی‌تری؛ همین کافیه برای ادامه دادن.",
-    "🌈 سختی‌های امروز، پله‌های افتخار فردا هستن.",
-    "👑 کسی که هر روز تلاش می‌کنه، شکست نمی‌خوره؛ فقط یاد می‌گیره.",
-]
+def calculate_gamification(total_hours, total_tests):
+    # فرمول تجربه: هر ساعت ۵۰ اکس‌پی، هر تست ۲ اکس‌پی
+    xp = int((total_hours * 50) + (total_tests * 2))
+    levels = [
+        (0, "🌱 داوطلب آغازین", 500),
+        (500, "📘 جنگجوی نیمه‌شب", 1500),
+        (1500, "⚔️ فاتح قلم‌چی", 3500),
+        (3500, "🎯 شکارچی درصد ۱۰۰", 7000),
+        (7000, "👑 اسطوره تجربی آکادمی ۲۰", 15000),
+    ]
+    cur_lvl, next_xp = levels[0][1], levels[0][2]
+    progress = 0.0
+    for i, (req, name, nxt) in enumerate(levels):
+        if xp >= req:
+            cur_lvl = name
+            next_xp = nxt
+            prev = req
+            progress = min(1.0, max(0.0, (xp - prev) / (next_xp - prev)))
+    return xp, cur_lvl, int(progress * 100)
 
 # ═══════════════════════════════════════════════════════
-# ۵. پوستر گرافیکی
+# ۵. موتور رندر تصویر پوستر روزانه (High-Res Poster)
 # ═══════════════════════════════════════════════════════
-def draw_gradient_bg(img, color_top, color_bottom):
-    w, h = img.size
-    for y in range(h):
-        ratio = y / h
-        r = int(color_top[0] * (1 - ratio) + color_bottom[0] * ratio)
-        g = int(color_top[1] * (1 - ratio) + color_bottom[1] * ratio)
-        b = int(color_top[2] * (1 - ratio) + color_bottom[2] * ratio)
-        ImageDraw.Draw(img).line([(0, y), (w, y)], fill=(r, g, b))
-
-
 def generate_report_card(name, date_str, satisfaction, study_hours, total_tests, percentage, screen_time):
-    W, H = 900, 560
-    img = Image.new('RGB', (W, H), color='#0b0f19')
-    draw_gradient_bg(img, (11, 15, 25), (20, 26, 48))
+    W, H = 880, 560
+    img = Image.new('RGB', (W, H), color='#090d16')
     draw = ImageDraw.Draw(img)
 
-    for i, col in enumerate([(56,189,248), (124,58,237), (244,114,182)]):
-        draw.rectangle([(12+i, 12+i), (W-12-i, H-12-i)], outline=col, width=1)
+    # حاشیه‌های شیشه‌ای نئونی چندلایه
+    draw.rectangle([(15, 15), (W-15, H-15)], outline='#38bdf8', width=2)
+    draw.rectangle([(18, 18), (W-18, H-18)], outline='#818cf8', width=1)
+    
+    # سربرگ سلطنتی
+    draw.rectangle([(35, 35), (W-35, 115)], fill='#111827', outline='#38bdf8', width=2)
+    draw.text((W//2 - 180, 50), "★ ACADEMY 20 • SMART STUDY LOG ★", fill='#38bdf8')
+    draw.text((W//2 - 150, 80), f"Student: {name}  |  Date: {date_str}", fill='#f8fafc')
 
-    draw.rectangle([(30, 30), (W-30, 118)], fill='#0f1729', outline='#38bdf8', width=2)
-    draw.text((W//2 - 200, 48), "  ACADEMY 20  •  STUDY REPORT  ", fill='#38bdf8')
-    draw.text((W//2 - 230, 78), f"Student: {name}     |     Date: {date_str}", fill='#ffffff')
+    # ویجت ساعت مطالعه و رضایت
+    draw.rectangle([(45, 140), (420, 260)], fill='#161f33', outline='#38bdf8', width=1)
+    draw.text((65, 160), "STUDY DURATION", fill='#94a3b8')
+    draw.text((65, 190), f"{study_hours} Hours", fill='#38bdf8')
+    draw.text((65, 225), f"Satisfaction: {satisfaction} / 10 ⭐", fill='#facc15')
 
-    draw.rectangle([(40, 145), (440, 265)], fill='#111c30', outline='#38bdf8', width=1)
-    draw.text((60, 165), "⏳  STUDY DURATION", fill='#94a3b8')
-    draw.text((60, 200), f"{study_hours} Hours", fill='#38bdf8')
-    draw.text((60, 235), f"⭐ Satisfaction: {satisfaction}/10", fill='#facc15')
+    # ویجت تست و درصد
+    draw.rectangle([(460, 140), (W-45, 260)], fill='#161f33', outline='#4ade80', width=1)
+    draw.text((480, 160), "TESTING PERFORMANCE", fill='#94a3b8')
+    draw.text((480, 190), f"{total_tests} Tests Solved", fill='#f8fafc')
+    draw.text((480, 225), f"Net Score: {percentage}%", fill='#4ade80')
 
-    draw.rectangle([(460, 145), (W-40, 265)], fill='#111c30', outline='#4ade80', width=1)
-    draw.text((480, 165), "📝  TESTS & SCORE", fill='#94a3b8')
-    draw.text((480, 200), f"Total Tests: {total_tests}", fill='#ffffff')
-    draw.text((480, 235), f"Net Score: {percentage}%", fill='#4ade80')
+    # اسکرین تایم
+    draw.rectangle([(45, 280), (W-45, 390)], fill='#1f1624', outline='#f87171', width=1)
+    draw.text((65, 300), "DIGITAL MONITORING (SCREEN TIME)", fill='#94a3b8')
+    draw.text((65, 335), f"Phone Usage: {screen_time}", fill='#f87171')
+    draw.text((65, 360), "Verified & Approved by Academy Core AI", fill='#64748b')
 
-    draw.rectangle([(40, 285), (W-40, 400)], fill='#1a1220', outline='#f87171', width=1)
-    draw.text((60, 305), "📱  DIGITAL WELLNESS", fill='#94a3b8')
-    draw.text((60, 340), f"Screen Time: {screen_time}", fill='#f87171')
-    draw.text((60, 370), "Monitored via Academy 20 Tracking Core", fill='#64748b')
-
-    draw.rectangle([(40, 420), (W-40, 445)], fill='#1e293b')
-    bar_w = int((W-80) * min(max(percentage, 0), 100) / 100)
-    draw.rectangle([(40, 420), (40+bar_w, 445)], fill='#4ade80')
-    draw.text((60, 452), f"Progress: {percentage}%", fill='#e2e8f0')
-
-    draw.text((W//2 - 200, 500), "Consultant: Dr. Khashayar Ashkboos", fill='#38bdf8')
-    draw.text((W//2 - 130, 528), "Telegram: @Kh_Ashkboos", fill='#94a3b8')
+    # فوتر برندینگ
+    draw.text((W//2 - 170, 480), "Mentor: Dr. Khashayar Ashkboos", fill='#38bdf8')
+    draw.text((W//2 - 110, 510), "Telegram: @Kh_Ashkboos", fill='#64748b')
 
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     return buf.getvalue()
 
-
 # ═══════════════════════════════════════════════════════
-# ۶. توابع کمکی
-# ═══════════════════════════════════════════════════════
-def compute_streak(df):
-    if df.empty:
-        return 0
-    dates = sorted(set(pd.to_datetime(df['report_date']).dt.date), reverse=True)
-    today = datetime.date.today()
-    streak = 0
-    check = today
-    if dates and dates[0] != today:
-        if dates[0] == today - datetime.timedelta(days=1):
-            check = today - datetime.timedelta(days=1)
-        else:
-            return 0
-    for d in dates:
-        if d == check:
-            streak += 1
-            check -= datetime.timedelta(days=1)
-        elif d < check:
-            break
-    return streak
-
-
-def get_level(total_hours):
-    levels = [
-        (0,  "🌱 نوآموز",      "badge-bronze"),
-        (10, "📘 کوشا",         "badge-silver"),
-        (30, "⚔️ سخت‌کوش",     "badge-silver"),
-        (60, "🥇 حرفه‌ای",      "badge-gold"),
-        (100,"💎 افسانه‌ای",     "badge-diamond"),
-    ]
-    current = levels[0]
-    for threshold, name, badge in levels:
-        if total_hours >= threshold:
-            current = (threshold, name, badge)
-    return current[1], current[2]
-
-
-# ═══════════════════════════════════════════════════════
-# ۷. ⏰ انتخابگر ساعت خلاقانه
-# ═══════════════════════════════════════════════════════
-def creative_time_picker(label, key_prefix, default_h=8, default_m=0):
-    """انتخاب ساعت با اسلایدر ساعت و دقیقه + پیش‌نمایش زنده"""
-    st.markdown(
-        f'<div class="time-label">🕐 {label}</div>',
-        unsafe_allow_html=True
-    )
-    col_h, col_m = st.columns([3, 2])
-
-    h = col_h.slider(
-        "ساعت", 0, 23, default_h,
-        key=f"{key_prefix}_h",
-        label_visibility="collapsed"
-    )
-    m = col_m.slider(
-        "دقیقه", 0, 55, default_m, step=5,
-        key=f"{key_prefix}_m",
-        label_visibility="collapsed"
-    )
-
-    st.markdown(
-        f'<div class="time-preview">⏰ {h:02d}:{m:02d}</div>',
-        unsafe_allow_html=True
-    )
-    return datetime.time(h, m)
-
-
-# ═══════════════════════════════════════════════════════
-# ۸. نشست
+# ۶. مدیریت ورود و نشست
 # ═══════════════════════════════════════════════════════
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
     st.session_state['username'] = ''
     st.session_state['name'] = ''
 
-# ═══════════════════════════════════════════════════════
-# ۹. صفحه ورود / ثبت‌نام
-# ═══════════════════════════════════════════════════════
 if not st.session_state['logged_in']:
     st.markdown("""
     <div class="hero-header">
         <div class="hero-title">👑 سامانه هوشمند آکادمی ۲۰</div>
-        <p class="hero-sub">مدیریت، پایش و تحلیل علمی فرآیند کنکور | <b>دکتر خشایار اشکبوس</b></p>
+        <p style="color:#94a3b8; font-size:14px; margin:0;">پلتفرم رهگیری، تحلیل و جهش رتبه کنکور | <b>دکتر خشایار اشکبوس</b></p>
     </div>
     """, unsafe_allow_html=True)
 
-    tab_login, tab_reg = st.tabs(["🔑 ورود دانش‌آموز", "📝 ثبت‌نام دانش‌آموز جدید"])
-
-    with tab_login:
-        col_u, col_p = st.columns(2)
-        u_in = col_u.text_input("نام کاربری:", key="l_user")
-        p_in = col_p.text_input("رمز عبور:", type="password", key="l_pass")
-        if st.button("🚀 ورود به داشبورد تحصیلی", use_container_width=True):
-            c.execute("SELECT name FROM users WHERE username=? AND password=?", (u_in, p_in))
-            res = c.fetchone()
-            if res:
+    t_in, t_up = st.tabs(["🔑 ورود به سامانه", "📝 ثبت‌نام دانش‌آموز جدید"])
+    with t_in:
+        c1, c2 = st.columns(2)
+        u = c1.text_input("نام کاربری:")
+        p = c2.text_input("رمز عبور:", type="password")
+        if st.button("ورود به پنل هوشمند", use_container_width=True):
+            c.execute("SELECT name FROM users WHERE username=? AND password=?", (u, p))
+            row = c.fetchone()
+            if row:
                 st.session_state['logged_in'] = True
-                st.session_state['username'] = u_in
-                st.session_state['name'] = res[0]
+                st.session_state['username'] = u
+                st.session_state['name'] = row[0]
                 st.rerun()
             else:
-                st.error("❌ نام کاربری یا رمز عبور اشتباه است.")
-
-    with tab_reg:
-        name_in = st.text_input("نام و نام خانوادگی:")
-        u_new = st.text_input("نام کاربری دلخواه (کد ملی یا شماره همراه):")
-        p_new = st.text_input("رمز عبور دلخواه:", type="password")
-        if st.button("✨ ثبت‌نام و عضویت در سامانه", use_container_width=True):
-            if name_in and u_new and p_new:
+                st.error("نام کاربری یا رمز عبور اشتباه است.")
+    with t_up:
+        n_up = st.text_input("نام و نام خانوادگی:")
+        u_up = st.text_input("نام کاربری جدید:")
+        p_up = st.text_input("رمز عبور جدید:", type="password")
+        if st.button("ثبت‌نام رسمی", use_container_width=True):
+            if n_up and u_up and p_up:
                 try:
-                    c.execute("INSERT INTO users VALUES (?, ?, ?)", (u_new, p_new, name_in))
+                    c.execute("INSERT INTO users VALUES (?, ?, ?)", (u_up, p_up, n_up))
                     conn.commit()
-                    st.success("🎉 حساب کاربری با موفقیت ساخته شد! اکنون وارد شوید.")
+                    st.success("حساب کاربری با موفقیت ایجاد شد! اکنون وارد شوید.")
                 except:
-                    st.error("⚠️ این نام کاربری قبلاً ثبت شده است.")
-            else:
-                st.warning("لطفاً همه فیلدها را پر کنید.")
+                    st.error("این نام کاربری قبلاً استفاده شده است.")
     st.stop()
 
 # ═══════════════════════════════════════════════════════
-# ۱۰. داشبورد اصلی
+# ۷. بارگذاری داده‌های تاریخی و رتبه کاربر
 # ═══════════════════════════════════════════════════════
-df_all = pd.read_sql_query("SELECT * FROM reports WHERE username=? ORDER BY report_date ASC",
-                           conn, params=(st.session_state['username'],))
-streak = compute_streak(df_all)
-total_hours_all = df_all['study_hours'].sum() if not df_all.empty else 0
-level_name, level_badge = get_level(total_hours_all)
-motivation = random.choice(MOTIVATIONS)
+df_user = pd.read_sql_query("SELECT * FROM reports WHERE username=? ORDER BY report_date ASC", conn, params=(st.session_state['username'],))
+tot_hours = df_user['study_hours'].sum() if not df_user.empty else 0
+tot_tests = df_user['total_tests'].sum() if not df_user.empty else 0
+xp, rank_title, xp_percent = calculate_gamification(tot_hours, tot_tests)
 
+# هدر بالای صفحه
 st.markdown(f"""
 <div class="hero-header">
-    <div class="hero-title">داشبورد نظارت مطالعاتی | آکادمی ۲۰</div>
-    <p class="hero-sub">دانش‌آموز کوشا: <b>{st.session_state['name']}</b></p>
+    <div class="hero-title">داشبورد فرماندهی مطالعه | آکادمی ۲۰</div>
+    <p style="color:#cbd5e1; margin:4px 0;">دانش‌آموز کوشا: <b>{st.session_state['name']}</b> | جایگاه: <b style="color:#38bdf8;">{rank_title}</b></p>
+    <div style="max-width: 400px; margin: 10px auto 0 auto;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
+            <span>امتیاز تلاش (XP): {xp}</span>
+            <span>پیشرفت سطح: {xp_percent}%</span>
+        </div>
+        <div class="xp-bar-container">
+            <div class="xp-bar-fill" style="width: {xp_percent}%;"></div>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# نوار بالایی
-col_s, col_l, col_m = st.columns([1, 1, 2])
-with col_s:
-    st.markdown(f"""
-    <div class="glass-card" style="text-align:center;">
-        <div class="streak-badge">🔥 {streak} روز متوالی</div>
-        <div class="metric-txt" style="margin-top:8px;">زنجیره مطالعه</div>
-    </div>
-    """, unsafe_allow_html=True)
-with col_l:
-    st.markdown(f"""
-    <div class="glass-card" style="text-align:center;">
-        <span class="badge {level_badge}" style="font-size:15px;">{level_name}</span>
-        <div class="metric-txt" style="margin-top:8px;">سطح فعلی</div>
-    </div>
-    """, unsafe_allow_html=True)
-with col_m:
-    st.markdown(f"""
-    <div class="glass-card" style="display:flex; align-items:center; gap:12px; height:100%;">
-        <div style="font-size:26px;">💬</div>
-        <div style="font-size:13.5px; color:#e2e8f0;">{motivation}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# تب‌های اصلی
-main_tab1, main_tab2, main_tab3 = st.tabs([
-    "📝 ثبت گزارش کار روزانه",
-    "📈 تحلیل هفتگی و ماهانه",
-    "⚙️ تنظیمات و خروج"
-])
+# تب‌های اصلی سامانه
+tab1, tab2, tab3 = st.tabs(["📝 ثبت گزارش پارت‌ها", "📊 تحلیل سبد مطالعه و هوش‌مصنوعی", "⚙️ پروفایل"])
 
 # ═══════════════════════════════════════════════════════
-# تب ۱: فرم ثبت گزارش
+# تب ۱: ثبت پارت‌ها و خلاقیت زمان
 # ═══════════════════════════════════════════════════════
-with main_tab1:
-    c_d1, c_d2 = st.columns(2)
-    rep_date = c_d1.date_input("📅 تاریخ ثبت گزارش:", datetime.date.today())
-    satisfaction = c_d2.slider("⭐️ کیفیت و رضایت از مطالعه امروز (۱ تا ۱۰):", 1, 10, 8)
+with tab1:
+    col_d, col_s = st.columns([1, 1])
+    rep_date = col_d.date_input("📅 تاریخ ثبت گزارش:", datetime.date.today())
+    satisfaction = col_s.slider("⭐️ میزان رضایت امروز از ۱ تا ۱۰:", 1, 10, 8)
 
-    st.markdown("#### 📚 ثبت ریز پارت‌های درسی")
+    # ویجت تایمر پومودورو درون‌برنامه‌ای
+    with st.expander("⏱ تایمر تمرکز پومودورو / زمان‌گیر آزمون (اختیاری)", expanded=False):
+        st.markdown("""
+        <div class="pomo-box">
+            <h4 style="color:#38bdf8; margin:0;">قانون ۲۵ دقیقه تست سرعتی + ۵ دقیقه تحلیل</h4>
+            <p style="font-size:13px; color:#94a3b8; margin:6px 0;">برای تست‌های زمان‌دار زیست و شیمی از این تایم استاندارد استفاده کن.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("#### 📚 ثبت ریز فعالیت‌های درسی")
     num_slots = st.number_input("تعداد پارت‌های مطالعه امروز:", min_value=1, max_value=12, value=3)
 
-    subjects = ["زیست‌شناسی", "شیمی", "فیزیک", "ریاضیات", "زمین‌شناسی",
-                "فارسی", "دینی", "عربی", "زبان", "سایر"]
-
+    subjects = ["زیست‌شناسی", "شیمی", "فیزیک", "ریاضیات", "زمین‌شناسی", "فارسی", "دینی", "عربی", "زبان", "سایر"]
     total_tests, total_c, total_w = 0, 0, 0
     total_minutes = 0
     parts_summary = []
+    subject_hours_dict = {}
 
     for i in range(int(num_slots)):
         with st.expander(f"📌 پارت درسی {i+1}", expanded=(i == 0)):
-            col_s1, col_s2 = st.columns([2, 1])
-            subj = col_s1.selectbox(f"درس (پارت {i+1})", subjects, key=f"s_{i}")
+            c_s1, c_s2 = st.columns([2, 1])
+            subj = c_s1.selectbox(f"درس (پارت {i+1})", subjects, key=f"s_{i}")
             if subj == "سایر":
-                subj = col_s1.text_input("نام درس انتخابی", key=f"cs_{i}")
-            test_type = col_s2.radio("نوع تست", ["آموزشی", "زمان‌دار"], horizontal=True, key=f"tt_{i}")
+                subj = c_s1.text_input("نام درس دلخواه", key=f"cs_{i}")
+            test_type = c_s2.radio("نوع تست", ["آموزشی", "زمان‌دار"], horizontal=True, key=f"tt_{i}")
 
-            # ⏰ انتخابگر ساعت خلاقانه
+            # انتخاب هوشمند زمان با تفکیک ساعت و دقیقه
             c_t1, c_t2 = st.columns(2)
-            with c_t1:
-                st_t = creative_time_picker("ساعت شروع", f"st_{i}", default_h=8, default_m=0)
-            with c_t2:
-                et_t = creative_time_picker("ساعت پایان", f"et_{i}", default_h=9, default_m=30)
+            st_t = c_t1.time_input("ساعت شروع", datetime.time(8, 0), key=f"st_{i}")
+            et_t = c_t2.time_input("ساعت پایان", datetime.time(9, 30), key=f"et_{i}")
 
-            # محاسبه مدت
-            start_dt = datetime.datetime.combine(datetime.date.today(), st_t)
-            end_dt = datetime.datetime.combine(datetime.date.today(), et_t)
-            dur = (end_dt - start_dt).total_seconds() / 60
-            if dur <= 0:
-                dur += 24 * 60  # اگه از نیمه‌شب گذشت
+            dur = (datetime.datetime.combine(datetime.date.today(), et_t) - 
+                   datetime.datetime.combine(datetime.date.today(), st_t)).total_seconds() / 60
+            if dur <= 0: dur += 24 * 60
             total_minutes += dur
-
-            # نمایش مدت به‌صورت زنده
-            hrs = int(dur // 60)
-            mins = int(dur % 60)
-            st.markdown(
-                f"""<div style="background:rgba(74,222,128,0.12); border-right:3px solid #4ade80;
-                padding:8px 12px; border-radius:8px; margin:8px 0; font-size:13px;">
-                ⏱️ مدت این پارت: <b style="color:#4ade80;">{hrs} ساعت و {mins} دقیقه</b>
-                </div>""",
-                unsafe_allow_html=True
-            )
+            subject_hours_dict[subj] = subject_hours_dict.get(subj, 0) + (dur / 60)
 
             c_src1, c_src2 = st.columns(2)
-            c_src1.text_input("منبع درسنامه", key=f"src_s_{i}")
-            c_src2.text_input("منبع تست", key=f"src_t_{i}")
+            src_study = c_src1.text_input("منبع درسنامه", key=f"src_s_{i}")
+            src_test = c_src2.text_input("منبع تست", key=f"src_t_{i}")
 
-            st.caption("آمار تست‌ها:")
             tc, tw, tu, td = st.columns(4)
-            c_val = tc.number_input("صحیح", min_value=0, value=0, key=f"c_{i}")
-            w_val = tw.number_input("غلط", min_value=0, value=0, key=f"w_{i}")
-            tu.number_input("نزده", min_value=0, value=0, key=f"u_{i}")
-            td.number_input("شک‌دار", min_value=0, value=0, key=f"d_{i}")
+            c_val = tc.number_input("صحیح", 0, key=f"c_{i}")
+            w_val = tw.number_input("غلط", 0, key=f"w_{i}")
+            u_val = tu.number_input("نزده", 0, key=f"u_{i}")
+            d_val = td.number_input("شک‌دار", 0, key=f"d_{i}")
 
-            st.text_input("مبحث و توضیحات پارت", key=f"nt_{i}")
+            notes = st.text_input("مبحث و نکات مهم این پارت", key=f"nt_{i}")
+            s_tests = c_val + w_val + u_val
+            total_tests += s_tests; total_c += c_val; total_w += w_val
+            parts_summary.append(f"{i+1}. {subj} ({st_t.strftime('%H:%M')}-{et_t.strftime('%H:%M')}) | {s_tests} تست ({c_val}ص/{w_val}غ)")
 
-            s_tests = c_val + w_val
-            total_tests += s_tests
-            total_c += c_val
-            total_w += w_val
-            parts_summary.append(
-                f"{i+1}. {subj} ({st_t.strftime('%H:%M')} تا {et_t.strftime('%H:%M')}) | {s_tests} تست ({c_val}ص/{w_val}غ)"
-            )
-
-    st.markdown("#### 📱 کنترل مصرف تلفن همراه (اسکرین‌تایم)")
+    st.markdown("#### 📱 کنترل دیجیتال و مصرف گوشی")
     c_sc1, c_sc2 = st.columns(2)
-    screen_t = c_sc1.text_input("کل مصرف گوشی امروز:", "۲:۱۵")
-    social_t = c_sc2.text_input("مدت زمان در شبکه‌های مجازی:", "۴۵ دقیقه")
+    screen_t = c_sc1.text_input("کل مصرف گوشی امروز:", "۱:۴۵")
+    social_t = c_sc2.text_input("مدت زمان در تلگرام/اینستاگرام:", "۳۵ دقیقه")
 
     study_hours = round(total_minutes / 60, 2)
     overall_perc = round(((total_c * 3 - total_w) / (total_tests * 3)) * 100, 1) if total_tests > 0 else 0.0
 
-    st.markdown(
-        f"""<div class="glass-card" style="text-align:center;">
-        <div style="font-size:14px; color:#94a3b8;">خلاصه‌ی امروز</div>
-        <div style="font-size:20px; font-weight:900; color:#38bdf8; margin-top:6px;">
-        ⏳ {study_hours} ساعت &nbsp;|&nbsp; 📝 {total_tests} تست &nbsp;|&nbsp; 🎯 {overall_perc}%
-        </div></div>""",
-        unsafe_allow_html=True
-    )
+    # ارزیاب خودکار هوش مصنوعی
+    ai_comment = "عالی پیش رفتی! تعادل ساعت مطالعه و تست بسیار مطلوب بود."
+    if study_hours > 7 and total_tests < 60:
+        ai_comment = "⚠️ ساعت مطالعه‌ات بالا بود اما حجم تست کمه؛ سعی کن سرعت ورود به تست‌ها رو بیشتر کنی."
+    elif overall_perc >= 75 and total_tests > 80:
+        ai_comment = "🔥 فوق‌العاده! دقت تست‌زنی بالای ۷۵٪ با حجم تست عالی؛ فرمول رتبه‌برتری یعنی همین!"
 
-    if st.button("💾 ثبت نهایی گزارش در دیتابیس", use_container_width=True):
-        c.execute('''INSERT INTO reports (username, report_date, satisfaction, study_hours,
-                    total_tests, correct_tests, wrong_tests, percentage, screen_time, social_time, details)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+    st.info(f"🤖 **تحلیلگر هوشمند آکادمی ۲۰:** {ai_comment}")
+
+    if st.button("💾 ثبت نهایی گزارش در پرونده تحصیلی", use_container_width=True):
+        c.execute('''INSERT INTO reports (username, report_date, satisfaction, study_hours, 
+                    total_tests, correct_tests, wrong_tests, percentage, screen_time, social_time, details, subjects_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                   (st.session_state['username'], rep_date, satisfaction, study_hours,
-                   total_tests, total_c, total_w, overall_perc, screen_t, social_t, "\n".join(parts_summary)))
+                   total_tests, total_c, total_w, overall_perc, screen_t, social_t, "\n".join(parts_summary), str(subject_hours_dict)))
         conn.commit()
         st.balloons()
-        st.success("✅ گزارش شما ذخیره شد و به بخش نمودارها اضافه گردید! 🎉")
+        st.success("✅ گزارش ثبت شد و امتیاز تجربه (XP) به حساب شما اضافه گردید!")
 
     st.markdown("---")
     st.markdown("#### 📤 کارنامه تصویری و ارسال به تلگرام")
-
     col_out1, col_out2 = st.columns(2)
 
     report_text = f"""📊 گزارش کار شبانه | آکادمی ۲۰
 👤 دانش‌آموز: {st.session_state['name']}
 📅 تاریخ: {rep_date} | ⭐ رضایت: {satisfaction}/10
-⏳ مجموع ساعت مطالعه: {study_hours} ساعت
+⏳ مجموع مطالعه: {study_hours} ساعت
 📝 کل تست‌ها: {total_tests} (✅ صحیح: {total_c} | ❌ غلط: {total_w})
 🎯 درصد خالص: {overall_perc}%
-📱 اسکرین‌تایم گوشی: {screen_t} (فضای مجازی: {social_t})
+📱 اسکرین‌تایم گوشی: {screen_t} (مجازی: {social_t})
 ━━━━━━━━━━━━━━━━━━━━
 📚 ریز پارت‌های مطالعه:
 """ + "\n".join(parts_summary) + f"""
 ━━━━━━━━━━━━━━━━━━━━
+💡 تحلیل هوشمند: {ai_comment}
 👨‍🏫 مشاور: دکتر خشایار اشکبوس | @Kh_Ashkboos"""
 
     with col_out1:
-        st.text_area("متن آماده جهت کپی:", report_text, height=200)
+        st.text_area("متن آماده ارسال به مشاور:", report_text, height=190)
         tg_url = "https://t.me/share/url?url=" + urllib.parse.quote(report_text)
-        st.markdown(f'<a href="{tg_url}" target="_blank" class="tg-button">🚀 ارسال مستقیم به تلگرام مشاور</a>',
-                    unsafe_allow_html=True)
+        st.markdown(f'<a href="{tg_url}" target="_blank" class="tg-button">🚀 ارسال مستقیم به تلگرام مشاور</a>', unsafe_allow_html=True)
 
     with col_out2:
-        img_bytes = generate_report_card(st.session_state['name'], str(rep_date), satisfaction,
-                                         study_hours, total_tests, overall_perc, screen_t)
-        st.image(img_bytes, caption="کارنامه گرافیکی اختصاصی شما", use_container_width=True)
-        st.download_button("📥 دانلود کارت تصویری (PNG)", img_bytes,
-                           file_name=f"report_{rep_date}.png", mime="image/png", use_container_width=True)
+        img_bytes = generate_report_card(st.session_state['name'], str(rep_date), satisfaction, study_hours, total_tests, overall_perc, screen_t)
+        st.image(img_bytes, caption="پیش‌نمایش کارنامه گرافیکی", use_container_width=True)
+        st.download_button("📥 دانلود کارت تصویری (PNG)", img_bytes, file_name=f"report_{rep_date}.png", mime="image/png", use_container_width=True)
 
 # ═══════════════════════════════════════════════════════
-# تب ۲: نمودارها
+# تب ۲: داشبورد تحلیلی و بالانس سبد مطالعه
 # ═══════════════════════════════════════════════════════
-with main_tab2:
-    st.markdown("### 📈 داشبورد تحلیل و مقایسه عملکرد")
+with tab2:
+    st.markdown("### 📈 داشبورد پایش عملکرد و تعادل دروس")
 
-    if df_all.empty:
-        st.info("⚠️ هنوز گزارشی ثبت نکرده‌اید! ابتدا در تب اول یک گزارش ثبت کنید تا نمودارها فعال شوند.")
+    if df_user.empty:
+        st.info("⚠️ هنوز گزارشی ثبت نشده است. پس از اولین ثبت، نمودارهای پیشرفته فعال می‌شوند.")
     else:
-        df_all['report_date'] = pd.to_datetime(df_all['report_date'])
-
-        c_filter1, c_filter2 = st.columns([1, 2])
-        time_frame = c_filter1.radio("انتخاب بازه تحلیلی:",
-                                     ["۷ روز اخیر (هفتگی)", "۳۰ روز اخیر (ماهانه)"],
-                                     horizontal=True)
+        df_user['report_date'] = pd.to_datetime(df_user['report_date'])
+        time_frame = st.radio("بازه بررسی:", ["۷ روز اخیر (هفتگی)", "۳۰ روز اخیر (ماهانه)"], horizontal=True)
         days = 7 if "۷" in time_frame else 30
+        f_df = df_user[df_user['report_date'] >= (pd.Timestamp(datetime.date.today() - datetime.timedelta(days=days)))]
 
-        filtered_df = df_all[df_all['report_date'] >=
-                             (pd.Timestamp(datetime.date.today() - datetime.timedelta(days=days)))]
-
-        if filtered_df.empty:
-            st.warning("در این بازه گزارشی ثبت نشده است.")
+        if f_df.empty:
+            st.warning("در این بازه گزارشی یافت نشد.")
         else:
-            sum_hours = filtered_df['study_hours'].sum()
-            sum_tests = filtered_df['total_tests'].sum()
-            avg_perc = filtered_df['percentage'].mean()
-            avg_sat = filtered_df['satisfaction'].mean()
+            # کارت‌های شاخص
+            c1, c2, c3, c4 = st.columns(4)
+            c1.markdown(f"""<div class="stat-card"><div style="font-size:24px; font-weight:900; color:#38bdf8;">{f_df['study_hours'].sum():.1f}</div><div style="font-size:12px; color:#94a3b8;">ساعت مطالعه کل</div></div>""", unsafe_allow_html=True)
+            c2.markdown(f"""<div class="stat-card"><div style="font-size:24px; font-weight:900; color:#4ade80;">{f_df['total_tests'].sum()}</div><div style="font-size:12px; color:#94a3b8;">مجموع تست‌ها</div></div>""", unsafe_allow_html=True)
+            c3.markdown(f"""<div class="stat-card"><div style="font-size:24px; font-weight:900; color:#facc15;">{f_df['percentage'].mean():.1f}%</div><div style="font-size:12px; color:#94a3b8;">میانگین درصد</div></div>""", unsafe_allow_html=True)
+            c4.markdown(f"""<div class="stat-card"><div style="font-size:24px; font-weight:900; color:#c084fc;">{round(f_df['total_tests'].sum() / max(1, f_df['study_hours'].sum()), 1)}</div><div style="font-size:12px; color:#94a3b8;">سرعت تست بر ساعت</div></div>""", unsafe_allow_html=True)
 
-            st.markdown(f"""
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:22px;">
-                <div class="metric-card">
-                    <span class="metric-icon">⏳</span>
-                    <div class="metric-num">{sum_hours:.1f}</div>
-                    <div class="metric-txt">ساعت مطالعه کل بازه</div>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-icon">📝</span>
-                    <div class="metric-num">{sum_tests}</div>
-                    <div class="metric-txt">مجموع تست‌های بازه</div>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-icon">🎯</span>
-                    <div class="metric-num">{avg_perc:.1f}%</div>
-                    <div class="metric-txt">میانگین درصد خالص</div>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-icon">⭐</span>
-                    <div class="metric-num">{avg_sat:.1f}</div>
-                    <div class="metric-txt">میانگین رضایت (از ۱۰)</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            g1, g2 = st.columns([1, 2])
-
+            g1, g2 = st.columns(2)
             with g1:
-                gauge = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=float(avg_perc),
-                    number={'suffix': "%", 'font': {'color': '#38bdf8', 'size': 34}},
-                    gauge={
-                        'axis': {'range': [0, 100], 'tickcolor': '#94a3b8'},
-                        'bar': {'color': "#4ade80"},
-                        'bgcolor': "#1e293b",
-                        'borderwidth': 0,
-                        'steps': [
-                            {'range': [0, 40], 'color': 'rgba(248,113,113,0.18)'},
-                            {'range': [40, 70], 'color': 'rgba(250,204,21,0.18)'},
-                            {'range': [70, 100], 'color': 'rgba(74,222,128,0.18)'},
-                        ],
-                        'threshold': {
-                            'line': {'color': "#38bdf8", 'width': 3},
-                            'thickness': 0.8,
-                            'value': float(avg_perc),
-                        }
-                    },
-                    title={'text': "درصد خالص میانگین", 'font': {'color': '#cbd5e1', 'size': 14}}
-                ))
-                gauge.update_layout(template="plotly_dark", height=280,
-                                    plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                                    font={'family': 'Vazirmatn'})
-                st.plotly_chart(gauge, use_container_width=True)
+                fig_h = px.bar(f_df, x='report_date', y='study_hours', title="📊 نوسان ساعت مطالعه روزانه",
+                               labels={'study_hours': 'ساعت مطالعه', 'report_date': 'تاریخ'},
+                               color_discrete_sequence=['#38bdf8'])
+                fig_h.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+                st.plotly_chart(fig_h, use_container_width=True)
 
             with g2:
-                fig_hours = px.bar(
-                    filtered_df, x='report_date', y='study_hours',
-                    title=f"📊 روند ساعت مطالعه روزانه ({time_frame})",
-                    labels={'study_hours': 'ساعت مطالعه', 'report_date': 'تاریخ'},
-                    color='study_hours',
-                    color_continuous_scale=['#0ea5e9', '#7c3aed', '#f472b6']
-                )
-                fig_hours.update_layout(
-                    template="plotly_dark",
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font={'family': 'Vazirmatn'},
-                    coloraxis_showscale=False,
-                    height=280
-                )
-                st.plotly_chart(fig_hours, use_container_width=True)
-
-            fig_tests = px.line(
-                filtered_df, x='report_date', y='total_tests',
-                title=f"📈 روند پیشرفت تعداد تست‌ها ({time_frame})",
-                labels={'total_tests': 'تعداد تست', 'report_date': 'تاریخ'},
-                markers=True, color_discrete_sequence=['#4ade80']
-            )
-            fig_tests.update_traces(line=dict(width=3), marker=dict(size=9, line=dict(width=2, color='#0b0f19')))
-            fig_tests.update_layout(
-                template="plotly_dark",
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font={'family': 'Vazirmatn'}
-            )
-            st.plotly_chart(fig_tests, use_container_width=True)
-
-            fig_sat = px.area(
-                filtered_df, x='report_date', y='satisfaction',
-                title="⭐ نمودار رضایت روزانه",
-                labels={'satisfaction': 'امتیاز رضایت', 'report_date': 'تاریخ'},
-                color_discrete_sequence=['#facc15']
-            )
-            fig_sat.update_traces(line=dict(width=2.5), fillcolor='rgba(250,204,21,0.15)')
-            fig_sat.update_layout(
-                template="plotly_dark",
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font={'family': 'Vazirmatn'}
-            )
-            st.plotly_chart(fig_sat, use_container_width=True)
-
-            summary_share = f"""📊 تحلیل عملکرد {time_frame} | آکادمی ۲۰
-👤 دانش‌آموز: {st.session_state['name']}
-⏳ مجموع ساعت مطالعه: {sum_hours:.1f} ساعت
-📝 کل تست‌های زده‌شده: {sum_tests} تست
-🎯 میانگین درصد آزمون‌ها: {avg_perc:.1f}%
-⭐ میانگین رضایت: {avg_sat:.1f}/10
-🔥 زنجیره مطالعه: {streak} روز متوالی
-━━━━━━━━━━━━━━━━━━━━
-👨‍🏫 مشاور: دکتر خشایار اشکبوس | @Kh_Ashkboos"""
-
-            tg_share_link = "https://t.me/share/url?url=" + urllib.parse.quote(summary_share)
-            st.markdown(f'<a href="{tg_share_link}" target="_blank" class="tg-button">📤 ارسال خلاصه آمار به تلگرام</a>',
-                        unsafe_allow_html=True)
+                fig_t = px.line(f_df, x='report_date', y='total_tests', title="📈 پیشرفت حجم تست‌زنی",
+                                labels={'total_tests': 'تعداد تست', 'report_date': 'تاریخ'},
+                                markers=True, color_discrete_sequence=['#4ade80'])
+                fig_t.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+                st.plotly_chart(fig_t, use_container_width=True)
 
 # ═══════════════════════════════════════════════════════
-# تب ۳: خروج
+# تب ۳: خروج و وضعیت حساب
 # ═══════════════════════════════════════════════════════
-with main_tab3:
+with tab3:
     st.markdown(f"""
-    <div class="glass-card">
-        <h3 style="margin:0 0 10px 0;">حساب کاربری: {st.session_state['name']}</h3>
-        <p style="color:#94a3b8 !important;">نام کاربری: <code style="color:#38bdf8;">{st.session_state['username']}</code></p>
-        <p style="color:#94a3b8 !important;">سطح: <span class="badge {level_badge}">{level_name}</span>
-           &nbsp;|&nbsp; 🔥 زنجیره: <b style="color:#fb923c;">{streak} روز</b>
-           &nbsp;|&nbsp; ⏳ کل مطالعه: <b style="color:#38bdf8;">{total_hours_all:.1f} ساعت</b></p>
+    <div style="background:#111827; border:1px solid #38bdf8; border-radius:16px; padding:20px;">
+        <h3>پروفایل تحصیلی: {st.session_state['name']}</h3>
+        <p style="color:#94a3b8;">نام کاربری: <code>{st.session_state['username']}</code></p>
+        <p style="color:#94a3b8;">سطح و جایگاه: <b style="color:#38bdf8;">{rank_title}</b> ({xp} XP)</p>
     </div>
     """, unsafe_allow_html=True)
-
     if st.button("🚪 خروج از حساب کاربری", use_container_width=True):
         st.session_state['logged_in'] = False
         st.rerun()
