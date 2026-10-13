@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # ═══════════════════════════════════════════════════════
-# ۲. استایل‌های پیشرفته با انیمیشن و گلس‌مورفیزم
+# ۲. استایل‌های پیشرفته + رفع مشکل Dropdown
 # ═══════════════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -37,25 +37,13 @@ st.markdown("""
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-    
-    @keyframes floatUp {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-6px); }
-    }
-    
     @keyframes pulseGlow {
         0%, 100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); }
         50% { box-shadow: 0 0 45px rgba(56, 189, 248, 0.75); }
     }
-
     @keyframes shimmer {
         0% { background-position: -300% 0; }
         100% { background-position: 300% 0; }
-    }
-
-    @keyframes rotateGlow {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
     }
     
     /* پس‌زمینه کهکشانی */
@@ -64,7 +52,6 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* ذرات نورانی شناور */
     .stApp::before {
         content: '';
         position: fixed;
@@ -81,7 +68,7 @@ st.markdown("""
         opacity: 0.7;
     }
 
-    /* هدر اصلی با حاشیه گرادیانت متحرک */
+    /* هدر */
     .hero-header {
         position: relative;
         background: linear-gradient(135deg, rgba(17,24,39,0.9) 0%, rgba(30,41,59,0.85) 100%);
@@ -122,18 +109,13 @@ st.markdown("""
         margin: 0 0 6px 0;
     }
 
-    .hero-sub {
-        color: #cbd5e1 !important;
-        font-size: 14px;
-        margin: 0;
-    }
+    .hero-sub { color: #cbd5e1 !important; font-size: 14px; margin: 0; }
 
-    /* کارت‌های شاخص */
+    /* کارت شاخص */
     .metric-card {
         position: relative;
         background: linear-gradient(145deg, rgba(17,24,39,0.85), rgba(30,41,59,0.75));
         backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(56, 189, 248, 0.28);
         border-radius: 18px;
         padding: 18px 14px;
@@ -142,26 +124,11 @@ st.markdown("""
         overflow: hidden;
         box-shadow: 0 8px 26px rgba(0,0,0,0.35);
     }
-
     .metric-card:hover {
         transform: translateY(-6px) scale(1.02);
         border-color: rgba(56, 189, 248, 0.7);
         box-shadow: 0 14px 36px rgba(56, 189, 248, 0.35);
     }
-
-    .metric-card::after {
-        content: '';
-        position: absolute;
-        top: 0; left: -60%;
-        width: 60%; height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.08), transparent);
-        transition: 0.6s;
-    }
-
-    .metric-card:hover::after {
-        left: 120%;
-    }
-
     .metric-num {
         font-size: 30px;
         font-weight: 900;
@@ -171,20 +138,10 @@ st.markdown("""
         background-clip: text;
         line-height: 1.2;
     }
+    .metric-txt { font-size: 12.5px; color: #94a3b8 !important; margin-top: 6px; }
+    .metric-icon { font-size: 22px; display: block; margin-bottom: 4px; }
 
-    .metric-txt {
-        font-size: 12.5px;
-        color: #94a3b8 !important;
-        margin-top: 6px;
-    }
-
-    .metric-icon {
-        font-size: 22px;
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    /* Streak Flame */
+    /* Streak */
     .streak-badge {
         display: inline-flex;
         align-items: center;
@@ -198,24 +155,12 @@ st.markdown("""
         animation: pulseGlow 2.5s ease-in-out infinite;
     }
 
-    /* جعبه انگیزشی */
-    .motivation-box {
-        background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.12));
-        border-right: 4px solid #38bdf8;
-        border-radius: 12px;
-        padding: 14px 18px;
-        margin: 18px 0;
-        font-style: italic;
-        color: #e2e8f0 !important;
-        font-size: 14.5px;
-    }
-
-    /* لیبل‌ها و متن‌ها */
     label, p, span, h1, h2, h3, h4, div {
         color: #ffffff !important;
         font-weight: 600;
     }
 
+    /* ورودی‌ها */
     input, textarea, select {
         background-color: rgba(30,41,59,0.85) !important;
         color: #ffffff !important;
@@ -223,7 +168,6 @@ st.markdown("""
         border-radius: 12px !important;
         transition: 0.25s;
     }
-
     input:focus, textarea:focus {
         border-color: #38bdf8 !important;
         box-shadow: 0 0 0 3px rgba(56,189,248,0.18) !important;
@@ -236,12 +180,10 @@ st.markdown("""
         border: none !important;
         border-radius: 12px !important;
         font-weight: 800 !important;
-        padding: 12px 20px !important;
+        padding: 10px 18px !important;
         transition: all 0.3s ease !important;
         box-shadow: 0 6px 20px rgba(124,58,237,0.28) !important;
-        letter-spacing: 0.3px;
     }
-
     .stButton > button:hover {
         transform: translateY(-2px) scale(1.01);
         box-shadow: 0 10px 30px rgba(124,58,237,0.55) !important;
@@ -266,24 +208,10 @@ st.markdown("""
         position: relative;
         overflow: hidden;
     }
-
     .tg-button:hover {
         transform: translateY(-3px);
         box-shadow: 0 12px 28px rgba(2,132,199,0.75);
         filter: brightness(1.1);
-    }
-
-    .tg-button::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25), transparent 70%);
-        transform: translateX(-100%);
-        transition: 0.7s;
-    }
-
-    .tg-button:hover::before {
-        transform: translateX(100%);
     }
 
     /* تب‌ها */
@@ -294,14 +222,12 @@ st.markdown("""
         border-radius: 14px;
         border: 1px solid rgba(56,189,248,0.18);
     }
-
     .stTabs [data-baseweb="tab"] {
         border-radius: 10px !important;
         padding: 10px 16px !important;
         font-weight: 700 !important;
         transition: 0.25s;
     }
-
     .stTabs [aria-selected="true"] {
         background: linear-gradient(90deg, #0284c7, #7c3aed) !important;
         color: #ffffff !important;
@@ -315,11 +241,10 @@ st.markdown("""
         border-radius: 10px;
     }
 
-    /* گلس کارت عمومی */
+    /* گلس کارت */
     .glass-card {
         background: rgba(17,24,39,0.72);
         backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(56,189,248,0.22);
         border-radius: 16px;
         padding: 18px;
@@ -341,6 +266,92 @@ st.markdown("""
     .badge-silver { color:#cbd5e1; border-color:#cbd5e1; background:rgba(203,213,225,0.12); }
     .badge-gold   { color:#facc15; border-color:#facc15; background:rgba(250,204,21,0.12); }
     .badge-diamond{ color:#38bdf8; border-color:#38bdf8; background:rgba(56,189,248,0.12); }
+
+    /* ═══════════════════════════════════════════════════
+       🎯 رفع مشکل دیده نشدن متن Dropdown/Selectbox
+       ═══════════════════════════════════════════════════ */
+    div[data-baseweb="select"] > div {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border-color: rgba(56,189,248,0.35) !important;
+    }
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div,
+    div[data-baseweb="select"] input {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+
+    /* منوی بازشوی سلکت‌باکس */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] *,
+    div[data-baseweb="menu"],
+    div[data-baseweb="menu"] *,
+    ul[role="listbox"],
+    ul[role="listbox"] *,
+    div[role="listbox"],
+    div[role="listbox"] *,
+    li[role="option"],
+    li[role="option"] * {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+    }
+    ul[role="listbox"] li:hover,
+    div[role="option"]:hover,
+    li[role="option"]:hover {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+    }
+    li[aria-selected="true"],
+    div[aria-selected="true"] {
+        background-color: #0369a1 !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+
+    /* دکمه‌های StepUp/StepDown عدد */
+    button[data-testid="stNumberInputStepUp"],
+    button[data-testid="stNumberInputStepDown"] {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(56,189,248,0.35) !important;
+    }
+
+    /* Date Picker */
+    div[data-baseweb="calendar"],
+    div[data-baseweb="calendar"] * {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+    }
+    div[data-baseweb="calendar"] button:hover {
+        background-color: #0284c7 !important;
+    }
+    div[data-baseweb="calendar"] [aria-selected="true"] {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+    }
+
+    /* اسلایدر ساعت — پیش‌نمایش */
+    .time-preview {
+        text-align: center;
+        background: linear-gradient(90deg, #0284c7, #7c3aed);
+        color: #fff;
+        font-weight: 900;
+        font-size: 17px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        margin-top: 4px;
+        letter-spacing: 1.5px;
+        box-shadow: 0 4px 15px rgba(2,132,199,0.4);
+        animation: pulseGlow 3s ease-in-out infinite;
+    }
+
+    .time-label {
+        font-weight: 700;
+        color: #38bdf8 !important;
+        font-size: 13.5px;
+        margin-bottom: 4px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -372,7 +383,7 @@ MOTIVATIONS = [
 ]
 
 # ═══════════════════════════════════════════════════════
-# ۵. تولید پوستر گرافیکی حرفه‌ای
+# ۵. پوستر گرافیکی
 # ═══════════════════════════════════════════════════════
 def draw_gradient_bg(img, color_top, color_bottom):
     w, h = img.size
@@ -390,41 +401,33 @@ def generate_report_card(name, date_str, satisfaction, study_hours, total_tests,
     draw_gradient_bg(img, (11, 15, 25), (20, 26, 48))
     draw = ImageDraw.Draw(img)
 
-    # حاشیه گرادیانی
     for i, col in enumerate([(56,189,248), (124,58,237), (244,114,182)]):
         draw.rectangle([(12+i, 12+i), (W-12-i, H-12-i)], outline=col, width=1)
 
-    # هدر
     draw.rectangle([(30, 30), (W-30, 118)], fill='#0f1729', outline='#38bdf8', width=2)
     draw.text((W//2 - 200, 48), "  ACADEMY 20  •  STUDY REPORT  ", fill='#38bdf8')
     draw.text((W//2 - 230, 78), f"Student: {name}     |     Date: {date_str}", fill='#ffffff')
 
-    # کارت‌های داده
-    # کارت ۱ - مطالعه
     draw.rectangle([(40, 145), (440, 265)], fill='#111c30', outline='#38bdf8', width=1)
     draw.text((60, 165), "⏳  STUDY DURATION", fill='#94a3b8')
     draw.text((60, 200), f"{study_hours} Hours", fill='#38bdf8')
     draw.text((60, 235), f"⭐ Satisfaction: {satisfaction}/10", fill='#facc15')
 
-    # کارت ۲ - تست
     draw.rectangle([(460, 145), (W-40, 265)], fill='#111c30', outline='#4ade80', width=1)
     draw.text((480, 165), "📝  TESTS & SCORE", fill='#94a3b8')
     draw.text((480, 200), f"Total Tests: {total_tests}", fill='#ffffff')
     draw.text((480, 235), f"Net Score: {percentage}%", fill='#4ade80')
 
-    # کارت ۳ - اسکرین تایم
     draw.rectangle([(40, 285), (W-40, 400)], fill='#1a1220', outline='#f87171', width=1)
     draw.text((60, 305), "📱  DIGITAL WELLNESS", fill='#94a3b8')
     draw.text((60, 340), f"Screen Time: {screen_time}", fill='#f87171')
     draw.text((60, 370), "Monitored via Academy 20 Tracking Core", fill='#64748b')
 
-    # پیشرفت خطی
     draw.rectangle([(40, 420), (W-40, 445)], fill='#1e293b')
     bar_w = int((W-80) * min(max(percentage, 0), 100) / 100)
     draw.rectangle([(40, 420), (40+bar_w, 445)], fill='#4ade80')
     draw.text((60, 452), f"Progress: {percentage}%", fill='#e2e8f0')
 
-    # فوتر
     draw.text((W//2 - 200, 500), "Consultant: Dr. Khashayar Ashkboos", fill='#38bdf8')
     draw.text((W//2 - 130, 528), "Telegram: @Kh_Ashkboos", fill='#94a3b8')
 
@@ -434,7 +437,7 @@ def generate_report_card(name, date_str, satisfaction, study_hours, total_tests,
 
 
 # ═══════════════════════════════════════════════════════
-# ۶. توابع کمکی (Streak / Level)
+# ۶. توابع کمکی
 # ═══════════════════════════════════════════════════════
 def compute_streak(df):
     if df.empty:
@@ -473,17 +476,44 @@ def get_level(total_hours):
 
 
 # ═══════════════════════════════════════════════════════
-# ۷. نشست
+# ۷. ⏰ انتخابگر ساعت خلاقانه
+# ═══════════════════════════════════════════════════════
+def creative_time_picker(label, key_prefix, default_h=8, default_m=0):
+    """انتخاب ساعت با اسلایدر ساعت و دقیقه + پیش‌نمایش زنده"""
+    st.markdown(
+        f'<div class="time-label">🕐 {label}</div>',
+        unsafe_allow_html=True
+    )
+    col_h, col_m = st.columns([3, 2])
+
+    h = col_h.slider(
+        "ساعت", 0, 23, default_h,
+        key=f"{key_prefix}_h",
+        label_visibility="collapsed"
+    )
+    m = col_m.slider(
+        "دقیقه", 0, 55, default_m, step=5,
+        key=f"{key_prefix}_m",
+        label_visibility="collapsed"
+    )
+
+    st.markdown(
+        f'<div class="time-preview">⏰ {h:02d}:{m:02d}</div>',
+        unsafe_allow_html=True
+    )
+    return datetime.time(h, m)
+
+
+# ═══════════════════════════════════════════════════════
+# ۸. نشست
 # ═══════════════════════════════════════════════════════
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
     st.session_state['username'] = ''
     st.session_state['name'] = ''
-if 'celebrate' not in st.session_state:
-    st.session_state['celebrate'] = False
 
 # ═══════════════════════════════════════════════════════
-# ۸. صفحه ورود / ثبت‌نام
+# ۹. صفحه ورود / ثبت‌نام
 # ═══════════════════════════════════════════════════════
 if not st.session_state['logged_in']:
     st.markdown("""
@@ -527,9 +557,8 @@ if not st.session_state['logged_in']:
     st.stop()
 
 # ═══════════════════════════════════════════════════════
-# ۹. داشبورد اصلی
+# ۱۰. داشبورد اصلی
 # ═══════════════════════════════════════════════════════
-# محاسبه Streak و Level
 df_all = pd.read_sql_query("SELECT * FROM reports WHERE username=? ORDER BY report_date ASC",
                            conn, params=(st.session_state['username'],))
 streak = compute_streak(df_all)
@@ -544,7 +573,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# نوار بالایی: Streak + Level
+# نوار بالایی
 col_s, col_l, col_m = st.columns([1, 1, 2])
 with col_s:
     st.markdown(f"""
@@ -553,7 +582,6 @@ with col_s:
         <div class="metric-txt" style="margin-top:8px;">زنجیره مطالعه</div>
     </div>
     """, unsafe_allow_html=True)
-
 with col_l:
     st.markdown(f"""
     <div class="glass-card" style="text-align:center;">
@@ -561,7 +589,6 @@ with col_l:
         <div class="metric-txt" style="margin-top:8px;">سطح فعلی</div>
     </div>
     """, unsafe_allow_html=True)
-
 with col_m:
     st.markdown(f"""
     <div class="glass-card" style="display:flex; align-items:center; gap:12px; height:100%;">
@@ -603,14 +630,31 @@ with main_tab1:
                 subj = col_s1.text_input("نام درس انتخابی", key=f"cs_{i}")
             test_type = col_s2.radio("نوع تست", ["آموزشی", "زمان‌دار"], horizontal=True, key=f"tt_{i}")
 
+            # ⏰ انتخابگر ساعت خلاقانه
             c_t1, c_t2 = st.columns(2)
-            st_t = c_t1.time_input("ساعت شروع", datetime.time(8, 0), key=f"st_{i}")
-            et_t = c_t2.time_input("ساعت پایان", datetime.time(9, 30), key=f"et_{i}")
+            with c_t1:
+                st_t = creative_time_picker("ساعت شروع", f"st_{i}", default_h=8, default_m=0)
+            with c_t2:
+                et_t = creative_time_picker("ساعت پایان", f"et_{i}", default_h=9, default_m=30)
 
-            dur = (datetime.datetime.combine(datetime.date.today(), et_t) -
-                   datetime.datetime.combine(datetime.date.today(), st_t)).seconds / 60
-            if dur > 0:
-                total_minutes += dur
+            # محاسبه مدت
+            start_dt = datetime.datetime.combine(datetime.date.today(), st_t)
+            end_dt = datetime.datetime.combine(datetime.date.today(), et_t)
+            dur = (end_dt - start_dt).total_seconds() / 60
+            if dur <= 0:
+                dur += 24 * 60  # اگه از نیمه‌شب گذشت
+            total_minutes += dur
+
+            # نمایش مدت به‌صورت زنده
+            hrs = int(dur // 60)
+            mins = int(dur % 60)
+            st.markdown(
+                f"""<div style="background:rgba(74,222,128,0.12); border-right:3px solid #4ade80;
+                padding:8px 12px; border-radius:8px; margin:8px 0; font-size:13px;">
+                ⏱️ مدت این پارت: <b style="color:#4ade80;">{hrs} ساعت و {mins} دقیقه</b>
+                </div>""",
+                unsafe_allow_html=True
+            )
 
             c_src1, c_src2 = st.columns(2)
             c_src1.text_input("منبع درسنامه", key=f"src_s_{i}")
@@ -640,6 +684,15 @@ with main_tab1:
 
     study_hours = round(total_minutes / 60, 2)
     overall_perc = round(((total_c * 3 - total_w) / (total_tests * 3)) * 100, 1) if total_tests > 0 else 0.0
+
+    st.markdown(
+        f"""<div class="glass-card" style="text-align:center;">
+        <div style="font-size:14px; color:#94a3b8;">خلاصه‌ی امروز</div>
+        <div style="font-size:20px; font-weight:900; color:#38bdf8; margin-top:6px;">
+        ⏳ {study_hours} ساعت &nbsp;|&nbsp; 📝 {total_tests} تست &nbsp;|&nbsp; 🎯 {overall_perc}%
+        </div></div>""",
+        unsafe_allow_html=True
+    )
 
     if st.button("💾 ثبت نهایی گزارش در دیتابیس", use_container_width=True):
         c.execute('''INSERT INTO reports (username, report_date, satisfaction, study_hours,
@@ -710,7 +763,6 @@ with main_tab2:
             avg_perc = filtered_df['percentage'].mean()
             avg_sat = filtered_df['satisfaction'].mean()
 
-            # کارت‌های شاخص
             st.markdown(f"""
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:22px;">
                 <div class="metric-card">
@@ -736,10 +788,8 @@ with main_tab2:
             </div>
             """, unsafe_allow_html=True)
 
-            # چیدمان ۲ ستونی: گیج + میله‌ای
             g1, g2 = st.columns([1, 2])
 
-            # گیج دایره‌ای درصد
             with g1:
                 gauge = go.Figure(go.Indicator(
                     mode="gauge+number",
@@ -768,7 +818,6 @@ with main_tab2:
                                     font={'family': 'Vazirmatn'})
                 st.plotly_chart(gauge, use_container_width=True)
 
-            # نمودار میله‌ای ساعت مطالعه
             with g2:
                 fig_hours = px.bar(
                     filtered_df, x='report_date', y='study_hours',
@@ -785,10 +834,8 @@ with main_tab2:
                     coloraxis_showscale=False,
                     height=280
                 )
-                fig_hours.update_traces(marker_line_width=0, marker_line_color='#38bdf8')
                 st.plotly_chart(fig_hours, use_container_width=True)
 
-            # نمودار خطی تعداد تست‌ها
             fig_tests = px.line(
                 filtered_df, x='report_date', y='total_tests',
                 title=f"📈 روند پیشرفت تعداد تست‌ها ({time_frame})",
@@ -804,7 +851,6 @@ with main_tab2:
             )
             st.plotly_chart(fig_tests, use_container_width=True)
 
-            # نمودار رضایت
             fig_sat = px.area(
                 filtered_df, x='report_date', y='satisfaction',
                 title="⭐ نمودار رضایت روزانه",
@@ -820,7 +866,6 @@ with main_tab2:
             )
             st.plotly_chart(fig_sat, use_container_width=True)
 
-            # اشتراک در تلگرام
             summary_share = f"""📊 تحلیل عملکرد {time_frame} | آکادمی ۲۰
 👤 دانش‌آموز: {st.session_state['name']}
 ⏳ مجموع ساعت مطالعه: {sum_hours:.1f} ساعت
