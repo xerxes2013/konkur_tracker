@@ -2805,540 +2805,2099 @@ with t1:
 # پایان نیمه اول
 # ═══════════════════════════════════════════════════════════════════════════
 
-# ═══════════════════════════════════════════════════════════════════════
-    # ادامه تب ۱: حلقه ثبت پارت‌های مطالعه و تست‌ها
-    # ═══════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
+# ▌ ۲۰. تکمیل تب اول — حلقه پارت‌های درسی
+# ═══════════════════════════════════════════════════════════════════════════
 
-    total_tests, total_c, total_w = 0, 0, 0
+with t1:
+    # (بخش بالای تب قبلاً نوشته شد)
+
+    # ─── متغیرهای تجمعی ───
+    total_tests = 0
+    total_correct = 0
+    total_wrong = 0
     total_minutes = 0
     parts_summary = []
-    parts_data_for_db = []
-    errors_today = []
+    parts_data = []
+    error_data = []
 
+    # ─── حلقه پارت‌ها ───
     for i in range(int(num_slots)):
-        with st.expander(f"📌 پارت درسی {i+1}", expanded=(i == 0)):
-            c_s1, c_s2 = st.columns([2, 1])
-            subj = c_s1.selectbox(f"درس (پارت {i+1})", SUBJECTS, key=f"s_{i}")
+        with st.expander(
+            f"📌 پارت درسی {i+1}",
+            expanded=(i == 0),
+        ):
+            # ─── انتخاب درس و نوع تست ───
+            cs1, cs2 = st.columns([2, 1])
+            subj = cs1.selectbox(
+                f"درس (پارت {i+1})",
+                SUBJECTS,
+                key=f"s_{i}"
+            )
             if subj == "سایر":
-                subj = c_s1.text_input(f"نام درس انتخابی (پارت {i+1})", key=f"cs_{i}")
-            
-            test_type = c_s2.radio("نوع تست", ["آموزشی", "زمان‌دار"], horizontal=True, key=f"tt_{i}")
+                subj = cs1.text_input("نام درس انتخابی:", key=f"cs_{i}")
 
-            # ⏰ انتخابگر ساعت لوکس با مودال
-            c_t1, c_t2 = st.columns(2)
-            with c_t1:
-                st_t = time_picker_trigger("ساعت شروع", f"st_{i}", default_h=8, default_m=0)
-            with c_t2:
-                et_t = time_picker_trigger("ساعت پایان", f"et_{i}", default_h=9, default_m=30)
+            test_type = cs2.radio(
+                "نوع تست",
+                ["آموزشی", "زمان‌دار"],
+                horizontal=True,
+                key=f"tt_{i}"
+            )
 
-            # محاسبه مدت زمان
+            # ─── انتخاب ساعت شروع و پایان با مودال ───
+            ct1, ct2 = st.columns(2)
+            with ct1:
+                st_t = time_picker_trigger(
+                    "ساعت شروع",
+                    f"st_{i}",
+                    default_h=8, default_m=0
+                )
+            with ct2:
+                et_t = time_picker_trigger(
+                    "ساعت پایان",
+                    f"et_{i}",
+                    default_h=9, default_m=30
+                )
+
+            # ─── محاسبه مدت ───
             start_dt = datetime.datetime.combine(datetime.date.today(), st_t)
             end_dt = datetime.datetime.combine(datetime.date.today(), et_t)
             dur = (end_dt - start_dt).total_seconds() / 60
             if dur <= 0:
-                dur += 24 * 60  # عبور از نیمه‌شب
+                dur += 24 * 60
             total_minutes += dur
 
             hrs = int(dur // 60)
             mins = int(dur % 60)
-            st.markdown(f"""
-            <div style="background:rgba(56,189,248,0.1); border-right:3px solid #38bdf8; 
-                        padding:6px 12px; border-radius:8px; margin:6px 0; font-size:12.5px;">
-                ⏱️ مدت پارت: <b style="color:#38bdf8;">{hrs} ساعت و {mins} دقیقه</b>
-            </div>
-            """, unsafe_allow_html=True)
 
-            c_src1, c_src2 = st.columns(2)
-            src_study = c_src1.text_input("منبع درسنامه", key=f"src_s_{i}")
-            src_test = c_src2.text_input("منبع تست", key=f"src_t_{i}")
+            st.markdown(
+                f"""<div style="background:rgba(74,222,128,.12);
+                border-right:3px solid #4ade80;
+                padding:10px 14px; border-radius:10px;
+                margin:10px 0; font-size:13.5px;">
+                ⏱️ مدت این پارت:
+                <b style="color:#4ade80;">{hrs} ساعت و {mins} دقیقه</b>
+                </div>""",
+                unsafe_allow_html=True
+            )
 
-            st.caption("🎯 آمار تست‌ها:")
-            tc, tw, tu, td = st.columns(4)
-            c_val = tc.number_input("صحیح", min_value=0, value=0, key=f"c_{i}")
-            w_val = tw.number_input("غلط", min_value=0, value=0, key=f"w_{i}")
-            u_val = tu.number_input("نزده", min_value=0, value=0, key=f"u_{i}")
-            d_val = td.number_input("شک‌دار", min_value=0, value=0, key=f"d_{i}")
+            # ─── منابع مطالعه ───
+            csrc1, csrc2 = st.columns(2)
+            src_study = csrc1.text_input(
+                "📖 منبع درسنامه",
+                key=f"src_s_{i}",
+                placeholder="مثلاً: خیلی سبز، الگو"
+            )
+            src_test = csrc2.text_input(
+                "📝 منبع تست",
+                key=f"src_t_{i}",
+                placeholder="مثلاً: آزمون گاج"
+            )
 
-            # ─── جعبه سیاه اشتباهات (Error Vault) درون هر پارت ───
+            # ─── آمار تست ───
+            st.caption("آمار تست‌ها:")
+            tc1, tc2, tc3, tc4 = st.columns(4)
+            c_val = tc1.number_input(
+                "✅ صحیح",
+                min_value=0, value=0,
+                key=f"c_{i}"
+            )
+            w_val = tc2.number_input(
+                "❌ غلط",
+                min_value=0, value=0,
+                key=f"w_{i}"
+            )
+            b_val = tc3.number_input(
+                "⭕ نزده",
+                min_value=0, value=0,
+                key=f"u_{i}"
+            )
+            d_val = tc4.number_input(
+                "❔ شک‌دار",
+                min_value=0, value=0,
+                key=f"d_{i}"
+            )
+
+            # ─── جعبه سیاه اشتباهات ───
+            err_tag = None
             if w_val > 0:
-                with st.expander(f"⚠️ تحلیل غلط‌های {subj} ({w_val} غلط)", expanded=False):
-                    err_tag = st.selectbox(f"علت عمده تست‌های غلط {subj}:", ERROR_TAGS, key=f"err_tag_{i}")
-                    err_notes = st.text_input(f"نکته کلیدی رفع اشکال {subj}:", key=f"err_note_{i}")
-                    errors_today.append({
-                        'subject': subj,
-                        'tag': err_tag,
-                        'count': w_val,
-                        'notes': err_notes
-                    })
+                st.markdown("##### 🎯 جعبه سیاه اشتباهات (Smart Error Vault)")
+                st.caption(
+                    "علت اصلی غلط‌ها رو تگ کن تا AI Coach الگوی اشتباهاتت رو کشف کنه"
+                )
+                err_tag = st.selectbox(
+                    f"علت اصلی غلط‌های {subj}:",
+                    ERROR_TAGS,
+                    key=f"err_{i}"
+                )
 
-            notes = st.text_input("مبحث و خلاصه یادداشت", key=f"nt_{i}")
-            s_tests = c_val + w_val + u_val
+            # ─── توضیحات ───
+            notes = st.text_input(
+                "📝 مبحث و توضیحات این پارت:",
+                key=f"nt_{i}",
+                placeholder="مثلاً: فصل ۳ - تنظیم عصبی"
+            )
+
+            # ─── محاسبات این پارت ───
+            s_tests = c_val + w_val + b_val
             total_tests += s_tests
-            total_c += c_val
-            total_w += w_val
+            total_correct += c_val
+            total_wrong += w_val
 
             parts_summary.append(
-                f"{i+1}. {subj} ({st_t.strftime('%H:%M')}-{et_t.strftime('%H:%M')}) | "
-                f"{s_tests} تست ({c_val}ص/{w_val}غ/{d_val}شک) | مبحث: {notes or 'عمومی'}"
+                f"{i+1}. {subj} "
+                f"({st_t.strftime('%H:%M')}-{et_t.strftime('%H:%M')}) | "
+                f"{s_tests} تست ({c_val}✅/{w_val}❌)"
             )
-            parts_data_for_db.append({
+
+            parts_data.append({
                 'subject': subj,
                 'minutes': dur,
                 'tests': s_tests,
                 'correct': c_val,
                 'wrong': w_val,
+                'blank': b_val,
+                'doubt': d_val,
                 'start_hour': st_t.hour,
                 'end_hour': et_t.hour,
                 'study_source': src_study,
                 'test_source': src_test,
-                'notes': notes
+                'notes': notes,
             })
 
-    # ─── بخش اسکرین‌تایم و محاسبه DDI ───
-    st.markdown("#### 📱 کنترل دیجیتال و سلامت ذهن")
-    c_sc1, c_sc2 = st.columns(2)
-    screen_t = c_sc1.text_input("کل مصرف گوشی امروز (مثلاً ۲:۱۵):", "۱:۴۵")
-    social_t = c_sc2.text_input("فضای مجازی (اینستاگرام، تلگرام و...):", "۳۰ دقیقه")
+            if err_tag and w_val > 0:
+                error_data.append({
+                    'subject': subj,
+                    'tag': err_tag,
+                    'count': w_val,
+                })
 
+    # ═══════════════════════════════════════════════════════════
+    # ▌ بخش اسکرین‌تایم و DDI
+    # ═══════════════════════════════════════════════════════════
+
+    st.markdown("---")
+    st.markdown("#### 📱 کنترل مصرف تلفن همراه")
+
+    sc1, sc2 = st.columns(2)
+    screen_t = sc1.text_input(
+        "کل مصرف گوشی امروز:",
+        "۲:۱۵",
+        help="مثلاً: ۲:۱۵ (۲ ساعت و ۱۵ دقیقه)"
+    )
+    social_t = sc2.text_input(
+        "شبکه‌های اجتماعی:",
+        "۴۵ دقیقه",
+        help="مثلاً: ۴۵ دقیقه یا ۱:۳۰"
+    )
+
+    # ─── محاسبات نهایی ───
     study_hours = round(total_minutes / 60, 2)
-    overall_perc = calculate_percentage(total_c, total_w, total_tests - (total_c + total_w))
+    overall_perc = calculate_percentage(
+        total_correct, total_wrong, total_tests - total_correct - total_wrong
+    )
     ddi_val, ddi_lvl = compute_ddi(study_hours, social_t)
-    xp_today = calculate_session_xp(study_hours, total_tests, total_c)
 
-    # نمایش زنده پنل DDI و خلاصه روز
+    # ─── نمایش DDI زنده ───
     st.markdown(ddi_badge_html(ddi_val, ddi_lvl), unsafe_allow_html=True)
 
-    # ─── دکمه ثبت نهایی در دیتابیس ───
-    if st.button("💾 ثبت نهایی گزارش در دیتابیس آکادمی", use_container_width=True):
-        c = db_cursor()
-        try:
-            c.execute('''
-                INSERT INTO reports 
-                (username, report_date, satisfaction, study_hours, total_tests, 
-                 correct_tests, wrong_tests, percentage, screen_time, social_time, 
-                 details, xp_earned, ddi)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(username, report_date) DO UPDATE SET
-                    satisfaction=excluded.satisfaction,
-                    study_hours=excluded.study_hours,
-                    total_tests=excluded.total_tests,
-                    correct_tests=excluded.correct_tests,
-                    wrong_tests=excluded.wrong_tests,
-                    percentage=excluded.percentage,
-                    screen_time=excluded.screen_time,
-                    social_time=excluded.social_time,
-                    details=excluded.details,
-                    xp_earned=excluded.xp_earned,
-                    ddi=excluded.ddi
-            ''', (
-                USERNAME, rep_date, satisfaction, study_hours, total_tests,
-                total_c, total_w, overall_perc, screen_t, social_t,
-                "\n".join(parts_summary), xp_today, ddi_val
-            ))
-            
-            # ذخیره گزارش آی‌دی برای کلید خارجی
-            c.execute("SELECT id FROM reports WHERE username=? AND report_date=?", (USERNAME, rep_date))
-            rep_id = c.fetchone()[0]
-
-            # پاک کردن و ثبت مجدد پارت‌ها
-            c.execute("DELETE FROM parts WHERE report_id=?", (rep_id,))
-            for p in parts_data_for_db:
-                c.execute('''
-                    INSERT INTO parts 
-                    (report_id, username, report_date, subject, minutes, tests, 
-                     correct, wrong, start_hour, end_hour, study_source, test_source, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    rep_id, USERNAME, rep_date, p['subject'], p['minutes'],
-                    p['tests'], p['correct'], p['wrong'], p['start_hour'],
-                    p['end_hour'], p['study_source'], p['test_source'], p['notes']
-                ))
-
-            # ثبت خطاهای جعبه سیاه
-            for err in errors_today:
-                c.execute('''
-                    INSERT INTO error_vault (report_id, username, report_date, subject, error_tag, count, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (rep_id, USERNAME, rep_date, err['subject'], err['tag'], err['count'], err['notes']))
-
-            db_commit()
-
-            # بررسی و باز کردن مدال‌ها
-            today_rep_dict = {
-                'study_hours': study_hours,
-                'total_tests': total_tests,
-                'percentage': overall_perc,
-                'screen_time': screen_t,
-                'social_time': social_t
-            }
-            new_badges = check_and_unlock_badges(USERNAME, today_rep_dict, parts_data_for_db)
-
-            st.balloons()
-            st.success(f"✅ گزارش کار با موفقیت ذخیره شد! (+{xp_today} XP کسب کردی)")
-            if new_badges:
-                badge_names = " ، ".join([BADGES[b][1] for b in new_badges])
-                st.toast(f"🎖️ مدال‌های جدید آنلاک شد: {badge_names}", icon="✨")
-
-        except Exception as e:
-            st.error(f"خطا در ثبت پایگاه داده: {e}")
-
-    # ─── کارنامه‌های تصویری و اشتراک‌گذاری ───
-    st.markdown("---")
-    st.markdown("#### 🖼 کارنامه‌های تعاملی و اشتراک تلگرام")
-
-    report_text = f"""📊 گزارش کار شبانه | آکادمی ۲۰
-👤 دانش‌آموز: {USER_NAME}
-📅 تاریخ: {rep_date} | ⭐ رضایت: {satisfaction}/10
-⏳ مجموع مطالعه: {study_hours} ساعت
-📝 کل تست‌ها: {total_tests} (✅ {total_c} | ❌ {total_w})
-🎯 درصد خالص: {overall_perc}%
-📱 اسکرین‌تایم: {screen_t} (مجازی: {social_t})
-🧠 شاخص تخلیه تمرکز (DDI): {ddi_val}% ({DDI_META[ddi_lvl][1]})
-⚡ امتیاز تجربه: +{xp_today} XP | جایگاه: {cur_lvl[1]}
-━━━━━━━━━━━━━━━━━━━━
-📚 ریز پارت‌های مطالعه:
-""" + "\n".join(parts_summary) + f"""
-━━━━━━━━━━━━━━━━━━━━
-👨‍🏫 مشاور: دکتر خشایار اشکبوس | @Kh_Ashkboos"""
-
-    col_c1, col_c2 = st.columns([1, 1])
-
-    with col_c1:
-        st.markdown("##### 📋 متن تلگرام و کپی")
-        st.text_area("متن گزارش جهت ارسال به مشاور:", report_text, height=220)
-        tg_url = "https://t.me/share/url?url=" + urllib.parse.quote(report_text)
-        st.markdown(f'<a href="{tg_url}" target="_blank" class="tg-button">🚀 ارسال مستقیم متن به تلگرام مشاور</a>', unsafe_allow_html=True)
-
-    with col_c2:
-        st.markdown("##### 🎴 کارت گرافیکی HTML2Canvas")
-        card_html = render_html_report_card(
-            USER_NAME, str(rep_date), satisfaction, study_hours,
-            total_tests, overall_perc, screen_t, ddi_val, ddi_lvl,
-            cur_lvl[1], total_xp + xp_today, streak, card_id="daily_card"
-        )
-        components.html(card_html, height=620, scrolling=True)
-
-    st.markdown("##### 📱 کارت استوری اینستاگرام / تلگرام (۹:۱۶)")
-    user_badges_now = list(get_unlocked_badges(USERNAME).keys())
-    story_html = render_html_story_card(
-        USER_NAME, str(rep_date), study_hours, total_tests,
-        overall_perc, ddi_val, ddi_lvl, cur_lvl[1], xp_today,
-        streak, user_badges_now, story_id="story_card"
+    # ─── پیش‌بینی XP ───
+    xp_today = calculate_session_xp(
+        study_hours, total_tests, total_correct
     )
-    components.html(story_html, height=880, scrolling=True)
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۱. تب ۲: اتاق تمرکز و پومودورو (Pomodoro Engine)
-# ═══════════════════════════════════════════════════════════════════════════
-with t2:
-    st.markdown("### 🍅 اتاق تمرکز پومودورو و تایمر آزمون")
-    st.markdown("""
-    <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
-    تکنیک پومودورو مغز را در وضعیت غوطه‌وری (Deep Work) نگه می‌دارد. یکی از حالت‌های زیر را انتخاب کن و وارد مدار تمرکز شو!
+    st.markdown(f"""
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:13px; color:#94a3b8;">
+            📊 پیش‌بینی امروز
+        </div>
+        <div style="font-size:22px; font-weight:900;
+                    color:#38bdf8; margin-top:10px;">
+            ⏳ {study_hours} ساعت &nbsp;•&nbsp;
+            📝 {total_tests} تست &nbsp;•&nbsp;
+            🎯 {overall_perc}%
+        </div>
+        <div style="margin-top:12px; font-size:17px;
+                    font-weight:800; color:#facc15;">
+            ⚡ +{xp_today:,} XP کسب خواهی کرد
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    c_mode1, c_mode2 = st.columns([2, 1])
-    selected_mode = c_mode1.selectbox("انتخاب حالت تایمر:", list(POMO_MODES.keys()))
-    
-    if c_mode2.button("تنظیم تایمر", use_container_width=True):
-        st.session_state.pomo = {
-            'running': False,
-            'end_time': None,
-            'duration': POMO_MODES[selected_mode],
-            'last_remaining': POMO_MODES[selected_mode],
-            'mode': selected_mode
-        }
-        st.rerun()
+    # ─── نمودار زنده سبد مطالعاتی ───
+    if parts_data:
+        live_df = pd.DataFrame(parts_data)
+        live_df = live_df[live_df['minutes'] > 0]
 
-    # رندر تایمر پومودورو
+        if not live_df.empty:
+            st.markdown("#### 🍩 سبد مطالعاتی امروز")
+            d1, d2 = st.columns(2)
+
+            with d1:
+                fig_donut = px.pie(
+                    live_df,
+                    names='subject',
+                    values='minutes',
+                    hole=0.55,
+                    title="⏱️ سهم دروس بر اساس زمان",
+                    color='subject',
+                    color_discrete_map=SUBJECT_COLORS,
+                )
+                fig_donut.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label',
+                )
+                fig_donut.update_layout(
+                    template="plotly_dark",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font={'family': 'Vazirmatn'},
+                    showlegend=False,
+                    height=340,
+                )
+                st.plotly_chart(fig_donut, use_container_width=True)
+
+            with d2:
+                radar_df = live_df.groupby('subject')['tests'].sum().reset_index()
+                if not radar_df.empty and radar_df['tests'].sum() > 0:
+                    fig_radar = go.Figure()
+                    fig_radar.add_trace(go.Scatterpolar(
+                        r=radar_df['tests'],
+                        theta=radar_df['subject'],
+                        fill='toself',
+                        fillcolor='rgba(56,189,248,0.25)',
+                        line=dict(color='#38bdf8', width=2),
+                        name='تست',
+                    ))
+                    fig_radar.update_layout(
+                        polar=dict(
+                            bgcolor='rgba(15,23,42,0.5)',
+                            radialaxis=dict(
+                                visible=True,
+                                gridcolor='rgba(56,189,248,0.2)',
+                                color='#94a3b8',
+                            ),
+                            angularaxis=dict(
+                                gridcolor='rgba(56,189,248,0.2)',
+                                color='#e2e8f0',
+                            ),
+                        ),
+                        template="plotly_dark",
+                        showlegend=False,
+                        height=340,
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font={'family': 'Vazirmatn'},
+                    )
+                    st.plotly_chart(fig_radar, use_container_width=True)
+                else:
+                    st.info("📊 برای نمایش رادار، باید تست ثبت کنی")
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ ثبت نهایی گزارش
+    # ═══════════════════════════════════════════════════════════
+
+    st.markdown("---")
+
+    col_save, col_info = st.columns([2, 1])
+    with col_info:
+        st.caption(
+            f"📊 {len(parts_data)} پارت • "
+            f"{study_hours} ساعت • "
+            f"{total_tests} تست"
+        )
+
+    with col_save:
+        if st.button(
+            "💾 ثبت نهایی گزارش در دیتابیس",
+            use_container_width=True,
+            type="primary",
+        ):
+            if study_hours <= 0 and total_tests == 0:
+                st.warning("⚠️ باید حداقل یک پارت با زمان یا تست ثبت کنی")
+            else:
+                try:
+                    c = db_cursor()
+
+                    # ─── بررسی تکراری نبودن ───
+                    c.execute(
+                        "SELECT id FROM reports WHERE username=? AND report_date=?",
+                        (USERNAME, rep_date)
+                    )
+                    existing = c.fetchone()
+
+                    if existing:
+                        # بروزرسانی گزارش موجود
+                        report_id = existing[0]
+                        c.execute('''
+                            UPDATE reports SET
+                                satisfaction=?, study_hours=?, total_tests=?,
+                                correct_tests=?, wrong_tests=?, percentage=?,
+                                screen_time=?, social_time=?, details=?,
+                                xp_earned=?, ddi=?
+                            WHERE id=?
+                        ''', (
+                            satisfaction, study_hours, total_tests,
+                            total_correct, total_wrong, overall_perc,
+                            screen_t, social_t, "\n".join(parts_summary),
+                            xp_today, ddi_val, report_id
+                        ))
+                        # پاک کردن پارت‌های قدیمی
+                        c.execute("DELETE FROM parts WHERE report_id=?", (report_id,))
+                        c.execute("DELETE FROM error_vault WHERE report_id=?", (report_id,))
+                        st.info("ℹ️ گزارش امروز بروزرسانی شد")
+                    else:
+                        # ثبت گزارش جدید
+                        c.execute('''
+                            INSERT INTO reports (
+                                username, report_date, satisfaction, study_hours,
+                                total_tests, correct_tests, wrong_tests, percentage,
+                                screen_time, social_time, details, xp_earned, ddi
+                            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        ''', (
+                            USERNAME, rep_date, satisfaction, study_hours,
+                            total_tests, total_correct, total_wrong, overall_perc,
+                            screen_t, social_t, "\n".join(parts_summary),
+                            xp_today, ddi_val
+                        ))
+                        report_id = c.lastrowid
+                        st.success(f"✅ گزارش ذخیره شد! (+{xp_today:,} XP)")
+
+                    # ─── ذخیره پارت‌ها ───
+                    for p in parts_data:
+                        c.execute('''
+                            INSERT INTO parts (
+                                report_id, username, report_date, subject,
+                                minutes, tests, correct, wrong,
+                                start_hour, end_hour, study_source,
+                                test_source, notes
+                            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        ''', (
+                            report_id, USERNAME, rep_date, p['subject'],
+                            p['minutes'], p['tests'], p['correct'], p['wrong'],
+                            p['start_hour'], p['end_hour'], p['study_source'],
+                            p['test_source'], p['notes']
+                        ))
+
+                    # ─── ذخیره اشتباهات ───
+                    for e in error_data:
+                        c.execute('''
+                            INSERT INTO error_vault (
+                                report_id, username, report_date,
+                                subject, error_tag, count
+                            ) VALUES (?,?,?,?,?,?)
+                        ''', (
+                            report_id, USERNAME, rep_date,
+                            e['subject'], e['tag'], e['count']
+                        ))
+
+                    db_commit()
+
+                    # ─── بررسی مدال‌ها ───
+                    report_obj = {
+                        'total_tests': total_tests,
+                        'study_hours': study_hours,
+                        'percentage': overall_perc,
+                        'screen_time': screen_t,
+                        'social_time': social_t,
+                    }
+                    new_badges = check_and_unlock_badges(
+                        USERNAME, report_obj, parts_data
+                    )
+
+                    # ─── جشن ───
+                    st.balloons()
+
+                    if new_badges:
+                        badge_html = "".join([
+                            f'<span class="badge-ach unlocked" '
+                            f'style="display:inline-block; margin:4px;">'
+                            f'{BADGES[b][0]} {BADGES[b][1]}</span>'
+                            for b in new_badges
+                        ])
+                        st.markdown(f"""
+                        <div class="glass-card"
+                             style="border-color:#facc15;
+                                    animation: popIn 0.8s ease;">
+                            <h3 style="color:#facc15 !important;">
+                                🎉 {len(new_badges)} مدال جدید باز شد!
+                            </h3>
+                            {badge_html}
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    # ─── ذخیره در session برای کارت ───
+                    st.session_state['last_report'] = {
+                        'date': str(rep_date),
+                        'satisfaction': satisfaction,
+                        'hours': study_hours,
+                        'tests': total_tests,
+                        'perc': overall_perc,
+                        'screen': screen_t,
+                        'social': social_t,
+                        'ddi': ddi_val,
+                        'ddi_lvl': ddi_lvl,
+                        'xp_today': xp_today,
+                        'new_badges': new_badges,
+                        'parts_summary': parts_summary,
+                        'correct': total_correct,
+                        'wrong': total_wrong,
+                    }
+
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ خطا در ذخیره: {e}")
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ بخش کارت‌های تصویری و اشتراک
+    # ═══════════════════════════════════════════════════════════
+
+    st.markdown("---")
+    st.markdown("#### 🖼️ کارنامه‌های تصویری و اشتراک‌گذاری")
+
+    co1, co2 = st.columns(2)
+
+    # ─── کارنامه عادی ───
+    with co1:
+        st.caption("📄 کارنامه عادی (۱۰۰۰×۷۰۰)")
+        try:
+            card_html = render_html_report_card(
+                USER_NAME,
+                str(rep_date),
+                satisfaction,
+                study_hours,
+                total_tests,
+                overall_perc,
+                screen_t,
+                ddi_val,
+                ddi_lvl,
+                cur_lvl[1],
+                total_xp + xp_today,
+                streak,
+                card_id="main_card",
+            )
+            components.html(card_html, height=850, scrolling=False)
+        except Exception as e:
+            st.error(f"خطا در تولید کارت: {e}")
+
+    # ─── کارنامه استوری ───
+    with co2:
+        st.caption("📱 کارنامه استوری (۱۰۸۰×۱۹۲۰)")
+        try:
+            last_rep = st.session_state.get('last_report') or {}
+            badges_for_story = last_rep.get('new_badges', [])
+
+            story_html = render_html_story_card(
+                USER_NAME,
+                str(rep_date),
+                study_hours,
+                total_tests,
+                overall_perc,
+                ddi_val,
+                ddi_lvl,
+                cur_lvl[1],
+                xp_today,
+                streak,
+                badges_for_story,
+                story_id="story_card",
+            )
+            components.html(story_html, height=900, scrolling=True)
+        except Exception as e:
+            st.error(f"خطا در تولید استوری: {e}")
+
+    # ─── متن گزارش برای تلگرام ───
+    st.markdown("#### 📤 متن آماده برای اشتراک‌گذاری")
+
+    report_text = f"""📊 گزارش کار | آکادمی ۲۰
+━━━━━━━━━━━━━━━━━━━━
+👤 دانش‌آموز: {USER_NAME}
+🎮 سطح: {cur_lvl[2]} {cur_lvl[1]}
+⚡ XP امروز: +{xp_today:,}
+📅 تاریخ: {rep_date}
+⭐ رضایت: {satisfaction}/10
+━━━━━━━━━━━━━━━━━━━━
+⏳ مطالعه: {study_hours} ساعت
+📝 تست‌ها: {total_tests}
+   ✅ صحیح: {total_correct}
+   ❌ غلط: {total_wrong}
+🎯 درصد خالص: {overall_perc}%
+━━━━━━━━━━━━━━━━━━━━
+📱 اسکرین‌تایم: {screen_t}
+📲 شبکه اجتماعی: {social_t}
+💎 DDI: {ddi_val}%
+🔥 زنجیره: {streak} روز
+━━━━━━━━━━━━━━━━━━━━
+📚 ریز پارت‌ها:
+""" + "\n".join(parts_summary) + f"""
+━━━━━━━━━━━━━━━━━━━━
+👨‍🏫 مشاور: دکتر خشایار اشکبوس
+📱 @Kh_Ashkboos"""
+
+    st.text_area(
+        "متن گزارش:",
+        report_text,
+        height=250,
+        key="report_text_area",
+    )
+
+    # ─── دکمه‌های اشتراک ───
+    btn_col1, btn_col2 = st.columns(2)
+
+    with btn_col1:
+        tg_url = "https://t.me/share/url?url=" + urllib.parse.quote(report_text)
+        st.markdown(
+            f'<a href="{tg_url}" target="_blank" class="tg-button">'
+            f'🚀 ارسال به تلگرام مشاور</a>',
+            unsafe_allow_html=True,
+        )
+
+    with btn_col2:
+        wa_url = "https://wa.me/?text=" + urllib.parse.quote(report_text)
+        st.markdown(
+            f'''<a href="{wa_url}" target="_blank"
+            style="display:block; width:100%; text-align:center;
+            background:linear-gradient(90deg,#25d366,#128c7e);
+            color:#fff !important; font-size:16px; font-weight:800;
+            padding:14px; border-radius:12px; text-decoration:none;
+            margin-top:15px; box-shadow:0 6px 18px rgba(37,211,102,0.45);">
+            💬 ارسال به واتساپ</a>''',
+            unsafe_allow_html=True,
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ▌ ۲۱. تب دوم — پومودورو کامل
+# ═══════════════════════════════════════════════════════════════════════════
+
+with t2:
+    st.markdown("### 🍅 تایمر پومودورو و استاپ‌واچ کنکوری")
+
+    st.markdown("""
+    <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
+        🎯 <b>روش پومودورو:</b> ۲۵ دقیقه تمرکز عمیق + ۵ دقیقه استراحت.
+        این روش برای مطالعه‌ی مؤثر و جلوگیری از فرسودگی ذهنی طراحی شده.<br>
+        ⚡ <b>تست سرعتی:</b> ۱۰ دقیقه، برای تمرین سرعت تست‌زنی.<br>
+        🧘 <b>تمرکز طولانی:</b> ۵۰ دقیقه، برای مباحث سنگین.<br>
+        🌙 <b>شبانه:</b> ۴۵ دقیقه، برای مرور شب قبل از خواب.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ─── انتخاب حالت ───
+    col_mode1, col_mode2 = st.columns([3, 1])
+
+    with col_mode1:
+        mode = st.radio(
+            "حالت تمرکز:",
+            list(POMO_MODES.keys()),
+            key="pomo_mode",
+            horizontal=True,
+        )
+
+    with col_mode2:
+        custom_min = st.number_input(
+            "یا دقیقه دلخواه:",
+            min_value=1, max_value=180, value=25,
+            key="pomo_custom",
+        )
+
+    # ─── تعیین مدت ───
+    if mode in POMO_MODES:
+        selected_dur = POMO_MODES[mode]
+        st.session_state.pomo['mode'] = mode
+    else:
+        selected_dur = custom_min * 60
+
+    st.session_state.pomo['duration'] = selected_dur
+
+    # ─── نمایش تایمر ───
     if HAS_FRAG:
         render_timer_fragment()
     else:
-        rem_sec = st.session_state.pomo.get('last_remaining', 25*60)
-        m, s = divmod(rem_sec, 60)
+        p = st.session_state.pomo
+        rem = (
+            max(0, int((p['end_time'] - datetime.datetime.now()).total_seconds()))
+            if p['running'] and p['end_time']
+            else p.get('last_remaining', selected_dur)
+        )
+        m, s = divmod(rem, 60)
+        st.markdown(
+            f'<div class="pomodoro-box">'
+            f'<div class="pomo-time">{m:02d}:{s:02d}</div>'
+            f'<div class="pomo-label">'
+            f'{"🔥 در حال اجرا" if p["running"] else "⏸️ آماده شروع"}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    # ─── کنترل‌ها ───
+    render_pomodoro_controls()
+
+    # ─── آمار پومودورو ───
+    st.markdown("---")
+    st.markdown("#### 📊 آمار جلسات پومودورو")
+
+    try:
+        pomo_stats = pd.read_sql_query(
+            """SELECT
+                COUNT(*) as total_sessions,
+                SUM(duration_minutes) as total_minutes,
+                AVG(duration_minutes) as avg_minutes
+            FROM pomodoro_sessions
+            WHERE username=? AND session_date >= ?""",
+            DB_CONN,
+            params=(USERNAME, (datetime.date.today() - datetime.timedelta(days=30)).isoformat()),
+        )
+
+        if not pomo_stats.empty and pomo_stats['total_sessions'].iloc[0]:
+            total_sess = int(pomo_stats['total_sessions'].iloc[0])
+            total_min = int(pomo_stats['total_minutes'].iloc[0] or 0)
+            avg_min = float(pomo_stats['avg_minutes'].iloc[0] or 0)
+
+            ps1, ps2, ps3 = st.columns(3)
+            with ps1:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <span class="metric-icon">🍅</span>
+                    <div class="metric-num">{total_sess}</div>
+                    <div class="metric-txt">تعداد جلسات ۳۰ روز</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with ps2:
+                hours = total_min / 60
+                st.markdown(f"""
+                <div class="metric-card">
+                    <span class="metric-icon">⏱️</span>
+                    <div class="metric-num">{hours:.1f}</div>
+                    <div class="metric-txt">ساعت پومودورو</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with ps3:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <span class="metric-icon">📈</span>
+                    <div class="metric-num">{avg_min:.0f}</div>
+                    <div class="metric-txt">میانگین دقیقه</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("💡 هنوز جلسه پومودورو کامل نکردی")
+    except Exception:
+        st.info("💡 آمار در دسترس نیست")
+
+    # ─── نمودار جلسات اخیر ───
+    try:
+        pomo_daily = pd.read_sql_query(
+            """SELECT
+                session_date,
+                COUNT(*) as sessions,
+                SUM(duration_minutes) as minutes
+            FROM pomodoro_sessions
+            WHERE username=? AND session_date >= ?
+            GROUP BY session_date
+            ORDER BY session_date ASC""",
+            DB_CONN,
+            params=(USERNAME, (datetime.date.today() - datetime.timedelta(days=14)).isoformat()),
+        )
+
+        if not pomo_daily.empty:
+            fig_pomo = px.bar(
+                pomo_daily,
+                x='session_date',
+                y='sessions',
+                title="📊 جلسات پومودورو ۱۴ روز اخیر",
+                labels={'sessions': 'تعداد جلسات', 'session_date': 'تاریخ'},
+                color='sessions',
+                color_continuous_scale=['#0ea5e9', '#7c3aed', '#f472b6'],
+            )
+            fig_pomo.update_layout(
+                template="plotly_dark",
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font={'family': 'Vazirmatn'},
+                coloraxis_showscale=False,
+                height=320,
+            )
+            st.plotly_chart(fig_pomo, use_container_width=True)
+    except Exception:
+        pass
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ▌ ۲۲. تب سوم — پیش‌بینی رتبه
+# ═══════════════════════════════════════════════════════════════════════════
+
+with t3:
+    st.markdown("### 🔮 شبیه‌ساز تراز و تخمین رتبه زنده")
+
+    st.markdown("""
+    <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
+        🤖 بر اساس میانگین ۳۰ روز اخیر شما (ساعت مطالعه + حجم تست + درصد خالص)،
+        یک بازه‌ی احتمالی رتبه‌ی کنکور با استفاده از مدل رگرسیون سبک تخمین زده می‌شود.
+        <br><br>
+        <b style="color:#facc15;">⚠️ توجه:</b> این تخمین صرفاً آموزشی است
+        و جایگزین آزمون‌های آزمایشی واقعی نمی‌شود.
+    </div>
+    """, unsafe_allow_html=True)
+
+    if df_all.empty:
+        st.info("⚠️ برای فعال شدن این بخش، حداقل یک گزارش ثبت کن.")
+    else:
+        # ─── فیلتر بازه ۳۰ روز ───
+        df30 = df_all[
+            pd.to_datetime(df_all['report_date']) >=
+            pd.Timestamp(datetime.date.today() - datetime.timedelta(days=30))
+        ]
+
+        if df30.empty:
+            st.warning("⚠️ در ۳۰ روز اخیر گزارشی نداری. از کل داده‌ها استفاده می‌شود.")
+            df30 = df_all
+
+        # ─── میانگین‌ها ───
+        ah = df30['study_hours'].mean()
+        at = df30['total_tests'].mean()
+        ap = df30['percentage'].mean()
+
+        # ─── پیش‌بینی ───
+        traz, rlo, rmid, rhi, comp = predict_rank(ah, at, ap)
+        tier, tcol = rank_tier(rmid)
+
+        # ─── کارت‌های اصلی ───
+        cA, cB = st.columns(2)
+
+        with cA:
+            st.markdown(f"""
+            <div class="rank-card" style="text-align:center;">
+                <div style="font-size:13px; color:#94a3b8;">
+                    🎯 بازه احتمالی رتبه (۳۰ روز اخیر)
+                </div>
+                <div class="rank-number" style="margin:18px 0;">
+                    {rlo:,} - {rhi:,}
+                </div>
+                <div class="rank-label">
+                    مرکز تخمین:
+                    <b style="color:#38bdf8;">{rmid:,}</b>
+                </div>
+                <div style="margin-top:18px;
+                            font-size:19px; font-weight:900;
+                            color:{tcol};">
+                    {tier}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with cB:
+            st.markdown(f"""
+            <div class="rank-card"
+                 style="text-align:center;
+                        border-color:rgba(56,189,248,.4);">
+                <div style="font-size:13px; color:#94a3b8;">
+                    📈 تراز تخمینی
+                </div>
+                <div class="rank-number" style="margin:18px 0;">
+                    {traz:,}
+                </div>
+                <div class="rank-label">از ۱۰,۰۰۰</div>
+                <div style="margin-top:18px;
+                            font-size:13px; color:#94a3b8;">
+                    امتیاز ترکیبی:
+                    <b style="color:#facc15;">{comp*100:.1f}%</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ─── میانگین‌های ورودی ───
+        st.markdown("#### 📊 داده‌های پایه (میانگین ۳۰ روز)")
+        m1, m2, m3 = st.columns(3)
+
+        with m1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">⏳</span>
+                <div class="metric-num">{ah:.1f}</div>
+                <div class="metric-txt">میانگین ساعت روزانه</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">📝</span>
+                <div class="metric-num">{at:.0f}</div>
+                <div class="metric-txt">میانگین تست روزانه</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">🎯</span>
+                <div class="metric-num">{ap:.1f}%</div>
+                <div class="metric-txt">میانگین درصد خالص</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ═══════════════════════════════════════════════════════════
+        # ▌ شبیه‌سازی سناریوهای What-If
+        # ═══════════════════════════════════════════════════════════
+        st.markdown("---")
+        st.markdown("#### 🎮 شبیه‌سازی «چی می‌شه اگر...»")
+        st.caption(
+            "ببین اگه این هفته تلاشت رو تغییر بدی، رتبه‌ت چقدر جابجا می‌شه!"
+        )
+
+        scenarios = [
+            (0, 0, 0, "📍 وضعیت فعلی", "#38bdf8"),
+            (0.5, 10, 2, "📈 کمی بهتر", "#4ade80"),
+            (1.0, 20, 5, "🚀 جدی‌تر", "#22d3ee"),
+            (1.5, 35, 8, "🔥 حالت حرفه‌ای", "#facc15"),
+            (2.0, 50, 12, "💎 منطقه المپیک", "#f472b6"),
+        ]
+
+        scen_data = []
+        for dh, dt, dp, lbl, col in scenarios:
+            nh = min(ah + dh, 14)
+            nt = min(at + dt, 250)
+            np_ = min(ap + dp, 100)
+
+            _, rl2, rm2, rh2, _ = predict_rank(nh, nt, np_)
+            diff = rmid - rm2
+            diff_txt = f"{diff:+,}" if diff != 0 else "—"
+
+            scen_data.append({
+                'سناریو': lbl,
+                'ساعت': round(nh, 1),
+                'تست': int(nt),
+                'درصد': round(np_, 1),
+                'رتبه تخمینی': f"{rl2:,} - {rh2:,}",
+                'تغییر': diff_txt,
+                'color': col,
+                '_rmid': rm2,
+                '_rlo': rl2,
+                '_rhi': rh2,
+            })
+
+        # جدول سناریوها
+        scen_df = pd.DataFrame([
+            {k: v for k, v in s.items() if not k.startswith('_') and k != 'color'}
+            for s in scen_data
+        ])
+        st.dataframe(
+            scen_df,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        # نمودار سناریوها
+        fig_what = go.Figure()
+        for s in scen_data:
+            fig_what.add_trace(go.Bar(
+                x=[s['سناریو']],
+                y=[s['_rmid']],
+                name=s['سناریو'],
+                marker_color=s['color'],
+                text=[f"{s['_rmid']:,}"],
+                textposition='outside',
+                error_y=dict(
+                    type='data',
+                    symmetric=False,
+                    array=[s['_rhi'] - s['_rmid']],
+                    arrayminus=[s['_rmid'] - s['_rlo']],
+                    color=s['color'],
+                    thickness=1.5,
+                    width=8,
+                ),
+                showlegend=False,
+            ))
+
+        fig_what.update_layout(
+            title="📊 تخمین رتبه در سناریوهای مختلف (کمتر = بهتر)",
+            template="plotly_dark",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Vazirmatn'},
+            yaxis_title="رتبه تخمینی",
+            yaxis_autorange="reversed",
+            height=420,
+        )
+        st.plotly_chart(fig_what, use_container_width=True)
+
+        # ═══════════════════════════════════════════════════════════
+        # ▌ روند رتبه در طول زمان
+        # ═══════════════════════════════════════════════════════════
+        st.markdown("---")
+        st.markdown("#### 📉 روند رتبه تخمینی شما (روز به روز)")
+
+        dfs = df_all.sort_values('report_date').copy()
+        dfs['date'] = pd.to_datetime(dfs['report_date'])
+        dfs['predicted_rank'] = [
+            predict_rank(r['study_hours'], r['total_tests'], r['percentage'])[2]
+            for _, r in dfs.iterrows()
+        ]
+
+        # محاسبه میانگین متحرک ۷ روز
+        dfs['ma7'] = dfs['predicted_rank'].rolling(window=7, min_periods=1).mean()
+
+        fig_trend = go.Figure()
+        fig_trend.add_trace(go.Scatter(
+            x=dfs['date'],
+            y=dfs['predicted_rank'],
+            mode='markers+lines',
+            name='رتبه تخمینی',
+            line=dict(color='#a78bfa', width=2),
+            marker=dict(size=8, color='#a78bfa',
+                        line=dict(width=2, color='#0b0f19')),
+        ))
+        fig_trend.add_trace(go.Scatter(
+            x=dfs['date'],
+            y=dfs['ma7'],
+            mode='lines',
+            name='میانگین ۷ روز',
+            line=dict(color='#facc15', width=3, dash='dash'),
+        ))
+
+        fig_trend.update_layout(
+            title="📊 روند رتبه تخمینی در طول زمان",
+            template="plotly_dark",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Vazirmatn'},
+            yaxis_title="رتبه تخمینی",
+            yaxis_autorange="reversed",
+            hovermode='x unified',
+            height=420,
+        )
+        st.plotly_chart(fig_trend, use_container_width=True)
+
+        # ═══════════════════════════════════════════════════════════
+        # ▌ تحلیل پیشرفته
+        # ═══════════════════════════════════════════════════════════
+        st.markdown("---")
+        st.markdown("#### 🤖 تحلیل هوشمند رتبه")
+
+        # محاسبه بهترین و بدترین روز
+        best_idx = dfs['predicted_rank'].idxmin()
+        worst_idx = dfs['predicted_rank'].idxmax()
+        best_day = dfs.loc[best_idx]
+        worst_day = dfs.loc[worst_idx]
+
         st.markdown(f"""
-        <div class="pomodoro-box">
-            <div class="pomo-time">{m:02d}:{s:02d}</div>
-            <div class="pomo-label">{st.session_state.pomo.get('mode', 'آماده شروع')}</div>
+        <div class="ai-coach">
+            <div class="ai-tip success">
+                🏆 <b>بهترین روز:</b>
+                {best_day['date'].strftime('%Y/%m/%d')} با رتبه تخمینی
+                <b style="color:#4ade80;">{best_day['predicted_rank']:,}</b>
+                ({best_day['study_hours']:.1f} ساعت - {best_day['total_tests']} تست)
+            </div>
+            <div class="ai-tip warning">
+                📉 <b>ضعیف‌ترین روز:</b>
+                {worst_day['date'].strftime('%Y/%m/%d')} با رتبه تخمینی
+                <b style="color:#facc15;">{worst_day['predicted_rank']:,}</b>
+                ({worst_day['study_hours']:.1f} ساعت - {worst_day['total_tests']} تست)
+            </div>
+            <div class="ai-tip info">
+                📊 <b>اختلاف بهترین و ضعیف‌ترین:</b>
+                {int(best_day['predicted_rank'] - worst_day['predicted_rank']):,} رتبه
+                — این نشون می‌ده ثباتت چقدر مهمه!
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-    render_pomodoro_controls()
-
-    # تاریخچه جلسات اخیر پومودورو
-    df_pomo = pd.read_sql_query(
-        "SELECT session_date, duration_minutes, mode FROM pomodoro_sessions WHERE username=? ORDER BY id DESC LIMIT 5",
-        DB_CONN, params=(USERNAME,)
-    )
-    if not df_pomo.empty:
-        st.markdown("##### 📜 آخرین جلسات تمرکز کامل شما:")
-        st.dataframe(df_pomo, use_container_width=True)
-
 
 # ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۲. تب ۳: شبیه‌ساز و پیش‌بینی رتبه کنکور (Predictive Rank)
+# ▌ ۲۳. تب چهارم — اتاق جنگ (Arena)
 # ═══════════════════════════════════════════════════════════════════════════
-with t3:
-    st.markdown("### 🔮 پیش‌بینی هوشمند رتبه و تراز کنکور")
-    st.markdown("""
-    <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
-    این مدل رگرسیونی عملکرد اخیر شما را با بانک داده رتبه‌برترهای پیشین دکتر اشکبوس مقایسه کرده و بازه رتبه شما را تخمین می‌زند.
-    </div>
-    """, unsafe_allow_html=True)
 
-    # مقادیر پیش‌فرض بر اساس داده‌های کاربر
-    def_h = float(df_all['study_hours'].mean()) if not df_all.empty else 7.0
-    def_t = float(df_all['total_tests'].mean()) if not df_all.empty else 80.0
-    def_p = float(df_all['percentage'].mean()) if not df_all.empty else 55.0
-
-    st.markdown("#### 🎛 سناریوسازی فرضی (What-If Analysis):")
-    col_w1, col_w2, col_w3 = st.columns(3)
-    sim_h = col_w1.slider("ساعت مطالعه میانگین روزانه:", 1.0, 15.0, def_h, step=0.5)
-    sim_t = col_w2.slider("تعداد تست میانگین روزانه:", 10, 300, int(def_t), step=10)
-    sim_p = col_w3.slider("میانگین درصد پاسخ‌گویی:", 10.0, 100.0, def_p, step=1.0)
-
-    traz, r_low, r_mid, r_high, score = predict_rank(sim_h, sim_t, sim_p)
-    tier_name, tier_col = rank_tier(r_mid)
-
-    st.markdown(f"""
-    <div class="rank-card" style="text-align:center;">
-        <span style="background:{tier_col}; color:#000; padding:6px 16px; border-radius:20px; font-weight:900; font-size:14px;">
-            {tier_name}
-        </span>
-        <div class="rank-number" style="margin-top:14px;">~ {r_mid:,}</div>
-        <div class="rank-label">رتبه احتمالی منطقه شما در کنکور سراسری تجربی</div>
-        <div style="font-size:15px; color:#38bdf8; margin-top:8px; font-weight:800;">
-            بازه تخمینی: {r_low:,} تا {r_high:,} | تراز پیش‌بینی شده: {traz:,}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # توصیه اختصاصی مشاور
-    if r_mid < 1000:
-        st.success("💎 در وضعیت رتبه زیر ۱۰۰۰ (پزشکی و دندانپزشکی دانشگاه‌های برتر) قرار داری! همین ثبات را حفظ کن.")
-    elif r_mid < 3000:
-        st.info("⚡ بسیار عالی! در یک قدمی پزشکی‌های تهران و کلان‌شهرها هستی؛ روزی ۳۰ تست بیشتر معجزه می‌کند.")
-    else:
-        st.warning("⚠️ برای قبولی در رشته‌های تاپ تجربی، سرعت تست‌زنی و ساعت مطالعه‌ات باید یک پله بالاتر بیاید.")
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۳. تب ۴: اتاق جنگ و دوئل گروهی (Study Arena)
-# ═══════════════════════════════════════════════════════════════════════════
 with t4:
-    st.markdown("### ⚔️ اتاق جنگ و لیدربورد رقابتی (Study Arena)")
+    st.markdown("### ⚔️ اتاق جنگ — دو﻿ئل دوستانه کنکوری")
+
     st.markdown("""
     <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
-    با دوستان خود یا بچه‌های آکادمی گروه بسازید، کد را به اشتراک بگذارید و بر سر ساعت مطالعه و تعداد تست در جدول رده‌بندی بجنگید!
+        🔥 با دوستات <b>اتاق مطالعه گروهی</b> بساز، اسم مستعار بذار
+        و در <b>لیدربورد هفتگی</b> با هم رقابت کن!
+        <br>
+        🎯 امتیاز بر اساس: ساعت مطالعه × ۵۰ + تعداد تست × ۲ + تست صحیح × ۱
     </div>
     """, unsafe_allow_html=True)
 
-    user_rooms = get_user_rooms(USERNAME)
+    # ─── اتاق‌های کاربر ───
+    try:
+        my_rooms = get_user_rooms(USERNAME)
+    except Exception:
+        my_rooms = pd.DataFrame()
 
-    ar_tab1, ar_tab2 = st.tabs(["🏆 لیدربورد اتاق‌ها", "➕ ساخت یا عضویت در اتاق"])
+    # ─── دو ستون: ساخت و پیوستن ───
+    a1, a2 = st.columns(2)
 
-    with ar_tab1:
-        if user_rooms.empty:
-            st.info("هنوز در اتاقی عضو نیستی! از تب بعدی یک اتاق بساز یا به اتاق دوستانت ملحق شو.")
-        else:
-            sel_room = st.selectbox("انتخاب اتاق مطالعاتی:", user_rooms['name'].tolist())
-            room_code = user_rooms[user_rooms['name'] == sel_room]['code'].values[0]
+    with a1:
+        st.markdown("##### 🏗️ ساخت اتاق جدید")
+        new_room_name = st.text_input(
+            "اسم اتاق:",
+            placeholder="مثلاً: جنگجویان پزشکی ۱۴۰۵",
+            key="new_room_name",
+        )
+        new_nickname = st.text_input(
+            "اسم مستعار خودت:",
+            placeholder="مثلاً: دکتر X",
+            key="new_nick",
+            max_chars=20,
+        )
 
-            st.markdown(f"##### 🏅 رده‌بندی ۷ روز اخیر اتاق `{sel_room}` (کد: `{room_code}`):")
-            lb_df = arena_leaderboard(room_code, days=7)
-
-            if lb_df.empty:
-                st.write("هنوز داده‌ای در این اتاق ثبت نشده است.")
+        if st.button("✨ ساخت اتاق", use_container_width=True):
+            if not new_room_name or not new_nickname:
+                st.warning("همه فیلدها را پر کن")
             else:
-                for idx, row in lb_df.iterrows():
-                    me_class = "arena-me" if row['is_me'] else ""
-                    medal = "🥇" if idx == 1 else ("🥈" if idx == 2 else ("🥉" if idx == 3 else f"#{idx}"))
-                    st.markdown(f"""
-                    <div class="arena-card {me_class}">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div class="arena-rank">{medal}</div>
-                            <div>
-                                <b style="font-size:16px; color:#fff;">{row['nickname']}</b>
-                                <div style="font-size:12px; color:#94a3b8;">{row['hours']} ساعت مطالعه | {row['tests']} تست</div>
-                            </div>
+                try:
+                    # تولید کد یکتا
+                    code = (
+                        f"{random.randint(1000, 9999)}-"
+                        f"{random.choice('ABCDEFGHJK')}"
+                        f"{random.choice('ABCDEFGHJK')}"
+                    )
+
+                    c = db_cursor()
+                    c.execute(
+                        "INSERT INTO arena_rooms (code, name, created_by) VALUES (?,?,?)",
+                        (code, new_room_name, USERNAME),
+                    )
+                    c.execute(
+                        "INSERT INTO arena_members (code, username, nickname) VALUES (?,?,?)",
+                        (code, USERNAME, new_nickname),
+                    )
+                    db_commit()
+
+                    st.success(f"🎉 اتاق ساخته شد! کد دعوت: `{code}`")
+                    st.info("📋 کد رو به دوستات بده تا بهت ملحق بشن")
+                    st.balloons()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"خطا: {e}")
+
+    with a2:
+        st.markdown("##### 🎟️ پیوستن به اتاق")
+        join_code = st.text_input(
+            "کد اتاق:",
+            key="join_code",
+            placeholder="1234-AB",
+        ).strip()
+        join_nick = st.text_input(
+            "اسم مستعار خودت:",
+            key="join_nick",
+            max_chars=20,
+        )
+
+        if st.button("🚀 پیوستن به اتاق", use_container_width=True):
+            if not join_code or not join_nick:
+                st.warning("همه فیلدها را پر کن")
+            else:
+                try:
+                    c = db_cursor()
+                    c.execute(
+                        "SELECT name FROM arena_rooms WHERE code=?",
+                        (join_code,),
+                    )
+                    r = c.fetchone()
+
+                    if not r:
+                        st.error("❌ اتاق پیدا نشد. کد رو چک کن.")
+                    else:
+                        try:
+                            c.execute(
+                                "INSERT INTO arena_members (code, username, nickname) "
+                                "VALUES (?,?,?)",
+                                (join_code, USERNAME, join_nick),
+                            )
+                            db_commit()
+                            st.success(f"🎉 به «{r[0]}» پیوستی!")
+                            st.balloons()
+                            st.rerun()
+                        except sqlite3.IntegrityError:
+                            st.info("ℹ️ قبلاً عضو این اتاق بودی")
+                except Exception as e:
+                    st.error(f"خطا: {e}")
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ نمایش اتاق و لیدربورد
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("---")
+
+    if my_rooms.empty:
+        st.info("💡 هنوز توی هیچ اتاقی نیستی. یکی بساز یا به دوستت ملحق شو!")
+    else:
+        room_options = [
+            f"{r['name']} ({r['code']}) - {r['nickname']}"
+            for _, r in my_rooms.iterrows()
+        ]
+        selected = st.selectbox(
+            "🏠 اتاق‌های تو:",
+            room_options,
+            key="selected_room",
+        )
+
+        sel_code = selected.split("(")[1].split(")")[0]
+        lb = arena_leaderboard(sel_code, days=7)
+
+        if lb.empty:
+            st.info("اتاق خالیه")
+        else:
+            st.markdown(f"#### 🏆 لیدربورد ۷ روز اخیر — {selected}")
+
+            rank_icons = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣",
+                          "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+
+            for idx, row in lb.iterrows():
+                icon = (rank_icons[idx - 1] if idx <= 10 else f"{idx}.")
+                me_cls = "arena-me" if row['is_me'] else ""
+                me_badge = (
+                    " <span style='color:#38bdf8; font-size:11px;'>(تو)</span>"
+                    if row['is_me'] else ""
+                )
+
+                st.markdown(f"""
+                <div class="arena-card {me_cls}">
+                    <div class="arena-rank">{icon}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800; font-size:15px;">
+                            {escape_html(row['nickname'])}{me_badge}
                         </div>
-                        <div style="font-size:18px; font-weight:900; color:#facc15;">
-                            ⚡ {row['score']:,} XP
+                        <div style="font-size:12px; color:#94a3b8;">
+                            ⏳ {row['hours']} ساعت &nbsp;•&nbsp;
+                            📝 {row['tests']} تست
+                        </div>
+                    </div>
+                    <div style="font-size:18px; font-weight:900; color:#facc15;">
+                        {row['score']:,}
+                        <span style="font-size:11px; color:#94a3b8;">XP</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # ─── نمودار مقایسه ───
+            fig_lb = px.bar(
+                lb.reset_index(),
+                x='nickname',
+                y='score',
+                title="📊 مقایسه امتیاز اعضای اتاق",
+                labels={'nickname': 'نام مستعار', 'score': 'امتیاز XP'},
+                color='score',
+                color_continuous_scale=['#0ea5e9', '#7c3aed', '#f472b6', '#facc15'],
+            )
+            fig_lb.update_layout(
+                template="plotly_dark",
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font={'family': 'Vazirmatn'},
+                coloraxis_showscale=False,
+                height=420,
+            )
+            st.plotly_chart(fig_lb, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ▌ ۲۴. تب پنجم — تحلیل‌ها
+# ═══════════════════════════════════════════════════════════════════════════
+
+with t5:
+    st.markdown("### 📈 داشبورد تحلیل هوشمند")
+
+    if df_all.empty:
+        st.info("⚠️ هنوز گزارشی ثبت نکرده‌ای!")
+    else:
+        # ─── فیلتر بازه ───
+        df_all['report_date'] = pd.to_datetime(df_all['report_date'])
+
+        cf1, cf2 = st.columns([1, 3])
+        with cf1:
+            tf_ = st.radio(
+                "انتخاب بازه:",
+                ["۷ روز اخیر", "۳۰ روز اخیر", "همه"],
+                horizontal=False,
+                key="analysis_range",
+            )
+
+        if "۷" in tf_:
+            fdf = df_all[
+                df_all['report_date'] >=
+                pd.Timestamp(datetime.date.today() - datetime.timedelta(days=7))
+            ]
+        elif "۳۰" in tf_:
+            fdf = df_all[
+                df_all['report_date'] >=
+                pd.Timestamp(datetime.date.today() - datetime.timedelta(days=30))
+            ]
+        else:
+            fdf = df_all
+
+        if fdf.empty:
+            st.warning("در این بازه داده‌ای وجود نداره.")
+        else:
+            # ─── شاخص‌های کلیدی ───
+            sh = fdf['study_hours'].sum()
+            stt = fdf['total_tests'].sum()
+            sc_ = fdf['correct_tests'].sum()
+            sw_ = fdf['wrong_tests'].sum()
+            ap = fdf['percentage'].mean()
+            asat = fdf['satisfaction'].mean()
+            pXP = calculate_session_xp(sh, stt, sc_)
+
+            st.markdown(f"""
+            <div style="display:grid;
+                        grid-template-columns: repeat(6, 1fr);
+                        gap:10px; margin-bottom:22px;">
+                <div class="metric-card">
+                    <span class="metric-icon">⚡</span>
+                    <div class="metric-num">{pXP:,}</div>
+                    <div class="metric-txt">XP بازه</div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-num">{sh:.1f}</div>
+                    <div class="metric-txt">ساعت مطالعه</div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-icon">📝</span>
+                    <div class="metric-num">{stt}</div>
+                    <div class="metric-txt">تعداد تست</div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-icon">✅</span>
+                    <div class="metric-num">{sc_}</div>
+                    <div class="metric-txt">صحیح</div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-icon">🎯</span>
+                    <div class="metric-num">{ap:.1f}%</div>
+                    <div class="metric-txt">میانگین درصد</div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-icon">⭐</span>
+                    <div class="metric-num">{asat:.1f}</div>
+                    <div class="metric-txt">میانگین رضایت</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # ═══════════════════════════════════════════════════════════
+            # ▌ AI Coach
+            # ═══════════════════════════════════════════════════════════
+            st.markdown("#### 🤖 تحلیلگر هوشمند AI Coach")
+            tips = ai_coach_analysis(fdf, df_all.iloc[-1].to_dict())
+            tips_html = "".join([
+                f'<div class="ai-tip {cls}">{txt}</div>'
+                for cls, txt in tips
+            ])
+            st.markdown(f'<div class="ai-coach">{tips_html}</div>',
+                        unsafe_allow_html=True)
+
+            # ═══════════════════════════════════════════════════════════
+            # ▌ جعبه سیاه اشتباهات
+            # ═══════════════════════════════════════════════════════════
+            st.markdown("#### 🎯 جعبه سیاه اشتباهات (Smart Error Vault)")
+
+            try:
+                ev = pd.read_sql_query(
+                    """SELECT subject, error_tag, SUM(count) as cnt
+                    FROM error_vault
+                    WHERE username=?
+                    GROUP BY subject, error_tag""",
+                    DB_CONN,
+                    params=(USERNAME,),
+                )
+            except Exception:
+                ev = pd.DataFrame()
+
+            if ev.empty:
+                st.info("💡 تا حالا اشتباهی تگ نکردی. دفعه بعد علت غلط رو تگ کن!")
+            else:
+                ec1, ec2 = st.columns(2)
+
+                with ec1:
+                    # توزیع کلی
+                    tag_total = ev.groupby('error_tag')['cnt'].sum().reset_index()
+                    fig_et = px.pie(
+                        tag_total,
+                        names='error_tag',
+                        values='cnt',
+                        hole=0.5,
+                        title="📊 توزیع کل علل غلط‌ها",
+                        color_discrete_sequence=px.colors.qualitative.Bold,
+                    )
+                    fig_et.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                    )
+                    fig_et.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font={'family': 'Vazirmatn'},
+                        showlegend=True,
+                        height=420,
+                    )
+                    st.plotly_chart(fig_et, use_container_width=True)
+
+                with ec2:
+                    # تفکیک بر اساس درس
+                    fig_es = px.bar(
+                        ev,
+                        x='subject',
+                        y='cnt',
+                        color='error_tag',
+                        title="🎓 تفکیک علل غلط بر اساس درس",
+                        color_discrete_sequence=px.colors.qualitative.Bold,
+                    )
+                    fig_es.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font={'family': 'Vazirmatn'},
+                        height=420,
+                        barmode='stack',
+                    )
+                    st.plotly_chart(fig_es, use_container_width=True)
+
+                # ─── تحلیل مشاور ───
+                top_err = ev.groupby('error_tag')['cnt'].sum().sort_values(ascending=False)
+
+                if len(top_err) >= 1:
+                    top_name = top_err.index[0]
+                    top_pct = (top_err.iloc[0] / top_err.sum()) * 100
+
+                    if any(k in top_name for k in ["دقت", "وقت", "خواندن"]):
+                        suggestion = (
+                            "این یعنی مشکل تو «دانش» نیست، بلکه «اجرا»ست "
+                            "— تمرین تمرکز و مدیریت زمان کن."
+                        )
+                    elif "فراموشی" in top_name:
+                        suggestion = "روی مرور و تثبیت مباحث با فاصله‌گذاری تمرکز کن."
+                    elif "دام" in top_name:
+                        suggestion = "با دقت بیشتر در خواندن صورت سؤال، دام‌ها رو خنثی کن."
+                    else:
+                        suggestion = "روی تسلط عمیق‌تر روی مبحث کار کن."
+
+                    st.markdown(f"""
+                    <div class="ai-coach">
+                        <div class="ai-tip info">
+                            🧠 <b>تحلیل مشاور:</b> بیشترین علت غلط‌های تو
+                            <b style="color:#facc15;">{top_name}</b> است
+                            ({top_pct:.0f}٪ از کل غلط‌ها).
+                            {suggestion}
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
 
-    with ar_tab2:
-        c_rm1, c_rm2 = st.columns(2)
-        with c_rm1:
-            st.markdown("##### ساخت اتاق جدید")
-            new_r_name = st.text_input("نام اتاق (مثلاً: رتبه‌برترهای ۱۴۰۴):")
-            new_r_nick = st.text_input("لقب شما در این اتاق:", value=USER_NAME)
-            if st.button("ایجاد اتاق جنگ", use_container_width=True):
-                if new_r_name:
-                    code = f"A20-{random.randint(1000, 9999)}"
-                    c = db_cursor()
-                    c.execute("INSERT INTO arena_rooms (code, name, created_by) VALUES (?, ?, ?)", (code, new_r_name, USERNAME))
-                    c.execute("INSERT INTO arena_members (code, username, nickname) VALUES (?, ?, ?)", (code, USERNAME, new_r_nick))
-                    db_commit()
-                    st.success(f"🎉 اتاق ساخته شد! کد اشتراک: `{code}`")
-                    st.rerun()
+            # ═══════════════════════════════════════════════════════════
+            # ▌ روند DDI
+            # ═══════════════════════════════════════════════════════════
+            st.markdown("#### 💎 شاخص تخلیه تمرکز (DDI)")
 
-        with c_rm2:
-            st.markdown("##### پیوستن به اتاق موجود")
-            join_code = st.text_input("کد اتاق (مثلاً: A20-1234):")
-            join_nick = st.text_input("لقب نمایشی شما:", value=USER_NAME, key="join_nick")
-            if st.button("پیوستن به رقابت", use_container_width=True):
-                if join_code:
-                    c = db_cursor()
-                    c.execute("SELECT code FROM arena_rooms WHERE code=?", (join_code.strip(),))
-                    if c.fetchone():
-                        try:
-                            c.execute("INSERT INTO arena_members (code, username, nickname) VALUES (?, ?, ?)", (join_code.strip(), USERNAME, join_nick))
-                            db_commit()
-                            st.success("✅ با موفقیت وارد اتاق شدی!")
-                            st.rerun()
-                        except sqlite3.IntegrityError:
-                            st.warning("قبلاً در این اتاق عضو شدی!")
-                    else:
-                        st.error("اتاقی با این کد پیدا نشد.")
+            ddi_rows = []
+            for _, r in fdf.iterrows():
+                dv, dl = compute_ddi(r['study_hours'], r['social_time'])
+                ddi_rows.append({
+                    'date': r['report_date'],
+                    'ddi': dv,
+                    'level': dl,
+                })
 
+            if ddi_rows:
+                ddf = pd.DataFrame(ddi_rows)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۴. تب ۵: آنالیز پیشرفته، هوش مصنوعی و جعبه سیاه
-# ═══════════════════════════════════════════════════════════════════════════
-with t5:
-    st.markdown("### 📈 داشبورد تحلیلی و جعبه سیاه اشتباهات")
+                colors_map = {
+                    'green': '#4ade80',
+                    'yellow': '#facc15',
+                    'red': '#f87171',
+                }
 
-    if df_all.empty:
-        st.info("گزارشی برای رسم نمودار وجود ندارد.")
-    else:
-        df_all['report_date'] = pd.to_datetime(df_all['report_date'])
+                fig_ddi = go.Figure()
 
-        # هوش مصنوعی دستیار مشاور
-        st.markdown("#### 🤖 تحلیل‌های هوشمند دکتر اشکبوس (AI Coach):")
-        ai_tips = ai_coach_analysis(df_all)
-        st.markdown('<div class="ai-coach">', unsafe_allow_html=True)
-        for t_type, t_msg in ai_tips:
-            st.markdown(f'<div class="ai-tip {t_type}">{t_msg}</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+                for lv, cc in colors_map.items():
+                    s = ddf[ddf['level'] == lv]
+                    if not s.empty:
+                        fig_ddi.add_trace(go.Scatter(
+                            x=s['date'],
+                            y=s['ddi'],
+                            mode='markers',
+                            name={'green': '💎 مغز الماسی',
+                                  'yellow': '⚠️ افت دوپامین',
+                                  'red': '🔥 بحرانی'}[lv],
+                            marker=dict(
+                                color=cc,
+                                size=14,
+                                line=dict(width=2, color='#0b0f19'),
+                            ),
+                        ))
 
-        # ─── جعبه سیاه اشتباهات (Error Vault Analysis) ───
-        df_errors = pd.read_sql_query(
-            "SELECT subject, error_tag, SUM(count) as total_err FROM error_vault WHERE username=? GROUP BY error_tag, subject",
-            DB_CONN, params=(USERNAME,)
-        )
-        if not df_errors.empty:
-            st.markdown("#### ⚠️ تحلیل جعبه سیاه تست‌های اشتباه:")
-            ce1, ce2 = st.columns(2)
-            with ce1:
-                fig_err = px.pie(
-                    df_errors, values='total_err', names='error_tag',
-                    title="سهم علل غلط زدن تست‌ها", hole=0.45,
-                    color_discrete_sequence=px.colors.qualitative.Pastel
+                fig_ddi.add_hline(
+                    y=DDI_GREEN_MAX,
+                    line_dash="dash",
+                    line_color="#4ade80",
+                    annotation_text="مرز سبز (۱۰٪)",
                 )
-                fig_err.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(fig_err, use_container_width=True)
-            with ce2:
-                fig_err_bar = px.bar(
-                    df_errors, x='subject', y='total_err', color='error_tag',
-                    title="تفکیک اشتباهات در هر درس", labels={'total_err': 'تعداد غلط', 'subject': 'درس'}
+                fig_ddi.add_hline(
+                    y=DDI_YELLOW_MAX,
+                    line_dash="dash",
+                    line_color="#f87171",
+                    annotation_text="مرز قرمز (۲۵٪)",
                 )
-                fig_err_bar.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(fig_err_bar, use_container_width=True)
 
-        # ─── نمودارهای ترند مطالعاتی ───
-        st.markdown("#### 📊 نمودارهای جامع روند پیشرفت:")
-        g_c1, g_c2 = st.columns(2)
-        with g_c1:
-            fig_hours = px.bar(
-                df_all, x='report_date', y='study_hours', title="روند ساعت مطالعه",
-                labels={'study_hours': 'ساعت مطالعه', 'report_date': 'تاریخ'},
-                color='study_hours', color_continuous_scale=['#0ea5e9', '#7c3aed']
-            )
-            fig_hours.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_hours, use_container_width=True)
+                fig_ddi.update_layout(
+                    template="plotly_dark",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font={'family': 'Vazirmatn'},
+                    title="📊 روند DDI روزانه — پایین‌تر = بهتر",
+                    yaxis_title="DDI (%)",
+                    height=420,
+                    hovermode='x unified',
+                )
+                st.plotly_chart(fig_ddi, use_container_width=True)
 
-        with g_c2:
-            fig_perc = px.line(
-                df_all, x='report_date', y='percentage', title="نوسان درصد آزمون‌ها",
-                labels={'percentage': 'درصد خالص', 'report_date': 'تاریخ'}, markers=True
+            # ═══════════════════════════════════════════════════════════
+            # ▌ سبد مطالعاتی (Sunburst)
+            # ═══════════════════════════════════════════════════════════
+            st.markdown("#### 🌞 سبد مطالعاتی ۳۰ روز اخیر")
+
+            try:
+                pd30 = pd.read_sql_query(
+                    """SELECT subject, minutes, tests
+                    FROM parts
+                    WHERE username=? AND report_date >= ?""",
+                    DB_CONN,
+                    params=(USERNAME,
+                            (datetime.date.today() -
+                             datetime.timedelta(days=30)).isoformat()),
+                )
+            except Exception:
+                pd30 = pd.DataFrame()
+
+            if not pd30.empty:
+                sc1, sc2 = st.columns(2)
+
+                with sc1:
+                    fs = px.sunburst(
+                        pd30,
+                        path=['subject'],
+                        values='minutes',
+                        color='minutes',
+                        color_continuous_scale=['#0ea5e9', '#7c3aed', '#f472b6'],
+                        title="⏱️ توزیع زمان بین دروس",
+                    )
+                    fs.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font={'family': 'Vazirmatn'},
+                        height=420,
+                    )
+                    st.plotly_chart(fs, use_container_width=True)
+
+                with sc2:
+                    sg = (
+                        pd30.groupby('subject')
+                        .agg({'minutes': 'sum', 'tests': 'sum'})
+                        .reset_index()
+                        .sort_values('minutes', ascending=False)
+                    )
+                    fb = px.bar(
+                        sg,
+                        x='subject',
+                        y='minutes',
+                        color='tests',
+                        title="📊 رتبه‌بندی دروس بر اساس زمان",
+                        color_continuous_scale=['#38bdf8', '#f472b6'],
+                    )
+                    fb.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font={'family': 'Vazirmatn'},
+                        height=420,
+                    )
+                    st.plotly_chart(fb, use_container_width=True)
+
+            # ═══════════════════════════════════════════════════════════
+            # ▌ نمودارهای روند
+            # ═══════════════════════════════════════════════════════════
+            st.markdown("#### 📈 روندهای عملکرد")
+
+            g1, g2 = st.columns([1, 2])
+
+            with g1:
+                # گیج درصد
+                gg = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=float(ap),
+                    number={
+                        'suffix': '%',
+                        'font': {'color': '#38bdf8', 'size': 34},
+                    },
+                    gauge={
+                        'axis': {'range': [0, 100],
+                                 'tickcolor': '#94a3b8'},
+                        'bar': {'color': "#4ade80"},
+                        'bgcolor': "#1e293b",
+                        'steps': [
+                            {'range': [0, 40],
+                             'color': 'rgba(248,113,113,.18)'},
+                            {'range': [40, 70],
+                             'color': 'rgba(250,204,21,.18)'},
+                            {'range': [70, 100],
+                             'color': 'rgba(74,222,128,.18)'},
+                        ],
+                    },
+                    title={
+                        'text': "میانگین درصد خالص",
+                        'font': {'color': '#cbd5e1', 'size': 14},
+                    },
+                ))
+                gg.update_layout(
+                    template="plotly_dark",
+                    height=280,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font={'family': 'Vazirmatn'},
+                )
+                st.plotly_chart(gg, use_container_width=True)
+
+            with g2:
+                # ساعت مطالعه روزانه
+                fh = px.bar(
+                    fdf,
+                    x='report_date',
+                    y='study_hours',
+                    title=f"⏳ ساعت مطالعه روزانه ({tf_})",
+                    labels={
+                        'study_hours': 'ساعت مطالعه',
+                        'report_date': 'تاریخ',
+                    },
+                    color='study_hours',
+                    color_continuous_scale=['#0ea5e9', '#7c3aed', '#f472b6'],
+                )
+                fh.update_layout(
+                    template="plotly_dark",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font={'family': 'Vazirmatn'},
+                    coloraxis_showscale=False,
+                    height=280,
+                )
+                st.plotly_chart(fh, use_container_width=True)
+
+            # ─── روند تست ───
+            ft = px.area(
+                fdf,
+                x='report_date',
+                y='total_tests',
+                title=f"📝 روند تست‌زنی ({tf_})",
+                labels={
+                    'total_tests': 'تعداد تست',
+                    'report_date': 'تاریخ',
+                },
+                color_discrete_sequence=['#4ade80'],
             )
-            fig_perc.update_traces(line_color='#4ade80', line_width=3)
-            fig_perc.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_perc, use_container_width=True)
+            ft.update_traces(
+                line=dict(width=3),
+                fillcolor='rgba(74,222,128,0.15)',
+            )
+            ft.update_layout(
+                template="plotly_dark",
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font={'family': 'Vazirmatn'},
+                height=320,
+            )
+            st.plotly_chart(ft, use_container_width=True)
+
+            # ─── روند رضایت ───
+            fsat = px.area(
+                fdf,
+                x='report_date',
+                y='satisfaction',
+                title=f"⭐ روند رضایت روزانه ({tf_})",
+                labels={
+                    'satisfaction': 'امتیاز رضایت',
+                    'report_date': 'تاریخ',
+                },
+                color_discrete_sequence=['#facc15'],
+            )
+            fsat.update_traces(
+                line=dict(width=3),
+                fillcolor='rgba(250,204,21,0.15)',
+            )
+            fsat.update_layout(
+                template="plotly_dark",
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font={'family': 'Vazirmatn'},
+                height=320,
+            )
+            st.plotly_chart(fsat, use_container_width=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۵. تب ۶: تالار افتخارات و دستاوردها (Achievements)
+# ▌ ۲۵. تب ششم — دستاوردها و مدال‌ها
 # ═══════════════════════════════════════════════════════════════════════════
+
 with t6:
-    st.markdown("### 🏆 تالار افتخارات و مدال‌های کسب‌شده")
-    st.markdown("""
-    <div class="glass-card" style="font-size:13.5px; color:#cbd5e1;">
-    با استمرار در مطالعه، کم کردن اسکرین‌تایم و زدن تست‌های بیشتر، مدال‌های ویژه آکادمی را آنلاک کن!
+    st.markdown("### 🏆 تالار افتخارات و مدال‌ها")
+
+    # ─── دریافت مدال‌های کاربر ───
+    unlocked = get_unlocked_badges(USERNAME)
+    total_badges = len(BADGES)
+    unlocked_count = len(unlocked)
+    pct = (unlocked_count / total_badges) * 100 if total_badges > 0 else 0
+
+    # ─── خلاصه پیشرفت ───
+    st.markdown(f"""
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:14px; color:#94a3b8;">
+            🎖️ پیشرفت مدال‌ها
+        </div>
+        <div style="font-size:42px; font-weight:900;
+                    color:#facc15; margin:14px 0;">
+            {unlocked_count} / {total_badges}
+        </div>
+        <div style="font-size:13px; color:#38bdf8;
+                    font-weight:800; margin-bottom:12px;">
+            {pct:.0f}٪ از کل مدال‌ها
+        </div>
+        <div class="xp-track" style="height:18px;">
+            <div class="xp-fill"
+                 style="--target:{pct:.0f}%; width:{pct:.0f}%;
+                        background:linear-gradient(90deg,
+                        #facc15, #f472b6, #a78bfa, #38bdf8);"></div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    unlocked_dict = get_unlocked_badges(USERNAME)
-    total_unlocked = len(unlocked_dict)
-    st.markdown(f"##### پیشرفت مدال‌ها: **{total_unlocked} از {len(BADGES)} مدال** باز شده است.")
+    # ─── فیلتر دستاوردها ───
+    fb1, fb2 = st.columns([1, 3])
+    with fb1:
+        filter_type = st.radio(
+            "نمایش:",
+            ["همه", "باز‌شده", "قفل"],
+            key="badge_filter",
+        )
 
-    cols = st.columns(4)
-    for idx, (b_id, (b_icon, b_title, b_desc)) in enumerate(BADGES.items()):
-        is_unlocked = b_id in unlocked_dict
-        u_class = "unlocked" if is_unlocked else "locked"
-        status_txt = f"آنلاک در: {unlocked_dict[b_id][:10]}" if is_unlocked else "🔒 قفل"
+    # ─── فیلتر مدال‌ها ───
+    filtered_badges = {}
+    for bid, badge_data in BADGES.items():
+        is_unlocked = bid in unlocked
+        if filter_type == "باز‌شده" and not is_unlocked:
+            continue
+        if filter_type == "قفل" and is_unlocked:
+            continue
+        filtered_badges[bid] = badge_data
 
-        with cols[idx % 4]:
+    # ─── نمایش مدال‌ها ───
+    st.markdown(f"#### 🎖️ گالری مدال‌ها ({len(filtered_badges)} مدال)")
+
+    if not filtered_badges:
+        st.info("هیچ مدالی در این دسته وجود نداره")
+    else:
+        cols = st.columns(4)
+
+        for idx, (bid, (icon, name, desc)) in enumerate(filtered_badges.items()):
+            is_unlocked = bid in unlocked
+            cls = "unlocked" if is_unlocked else "locked"
+
+            date_unlocked = ""
+            if is_unlocked:
+                try:
+                    dt = pd.to_datetime(unlocked[bid])
+                    date_unlocked = (
+                        f"<div style='font-size:10px; color:#94a3b8; "
+                        f"margin-top:8px;'>📅 "
+                        f"{dt.strftime('%Y/%m/%d')}</div>"
+                    )
+                except Exception:
+                    pass
+
+            with cols[idx % 4]:
+                st.markdown(f"""
+                <div class="badge-ach {cls}">
+                    <div style="font-size:38px;">{icon}</div>
+                    <div style="font-size:14px; font-weight:900;
+                                margin-top:8px;">{name}</div>
+                    <div style="font-size:11px; color:#94a3b8;
+                                margin-top:6px;">{desc}</div>
+                    {date_unlocked}
+                </div>
+                """, unsafe_allow_html=True)
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ پیشرفت به سمت مدال‌های بعدی
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("#### 🎯 مدال‌های نزدیک به باز شدن")
+
+    locked_badges = [
+        (bid, data) for bid, data in BADGES.items()
+        if bid not in unlocked
+    ]
+
+    if not locked_badges:
+        st.success("🎉 همه مدال‌ها رو باز کردی! افسانه‌ای هستی!")
+    else:
+        # محاسبه پیشرفت هر مدال
+        progress_data = []
+
+        for bid, (icon, name, desc) in locked_badges[:5]:
+            prog_val = 0
+            prog_txt = ""
+
+            if bid.startswith("hunter_"):
+                target = int(bid.split("_")[1])
+                current = df_all['total_tests'].max() if not df_all.empty else 0
+                prog_val = min(100, (current / target) * 100)
+                prog_txt = f"{int(current)}/{target} تست"
+
+            elif bid == "streak_7":
+                current = streak
+                prog_val = min(100, (current / 7) * 100)
+                prog_txt = f"{current}/7 روز"
+
+            elif bid == "streak_30":
+                current = streak
+                prog_val = min(100, (current / 30) * 100)
+                prog_txt = f"{current}/30 روز"
+
+            elif bid == "centurion":
+                current = df_all['study_hours'].sum() if not df_all.empty else 0
+                prog_val = min(100, (current / 100) * 100)
+                prog_txt = f"{current:.1f}/100 ساعت"
+
+            elif bid == "thousand":
+                current = df_all['study_hours'].sum() if not df_all.empty else 0
+                prog_val = min(100, (current / 1000) * 100)
+                prog_txt = f"{current:.1f}/1000 ساعت"
+
+            elif bid == "marathon_day":
+                current = df_all['study_hours'].max() if not df_all.empty else 0
+                prog_val = min(100, (current / 8) * 100)
+                prog_txt = f"{current:.1f}/8 ساعت"
+
+            elif bid == "mega_marathon":
+                current = df_all['study_hours'].max() if not df_all.empty else 0
+                prog_val = min(100, (current / 12) * 100)
+                prog_txt = f"{current:.1f}/12 ساعت"
+
+            else:
+                prog_val = 0
+                prog_txt = "در حال پیگیری"
+
+            progress_data.append({
+                'icon': icon,
+                'name': name,
+                'desc': desc,
+                'progress': prog_val,
+                'progress_txt': prog_txt,
+            })
+
+        for p in progress_data:
             st.markdown(f"""
-            <div class="badge-ach {u_class}">
-                <div style="font-size:32px; margin-bottom:6px;">{b_icon}</div>
-                <div style="font-size:15px; font-weight:900;">{b_title}</div>
-                <div style="font-size:11.5px; color:#94a3b8; margin:4px 0;">{b_desc}</div>
-                <div style="font-size:10px; color:#64748b; font-weight:700;">{status_txt}</div>
+            <div class="glass-card" style="padding:14px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="font-size:36px;">{p['icon']}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800; font-size:15px;
+                                    color:#38bdf8;">
+                            {p['name']}
+                        </div>
+                        <div style="font-size:12px; color:#94a3b8;
+                                    margin:4px 0 8px 0;">
+                            {p['desc']}
+                        </div>
+                        <div class="xp-track" style="height:12px;">
+                            <div class="xp-fill"
+                                 style="--target:{p['progress']:.0f}%;
+                                        width:{p['progress']:.0f}%;"></div>
+                        </div>
+                        <div style="font-size:11px; color:#64748b;
+                                    margin-top:6px; text-align:left;">
+                            {p['progress_txt']} ({p['progress']:.0f}%)
+                        </div>
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# ▌ ۲۶. تب ۷: پروفایل کاربری، خروجی داده و خروج
+# ▌ ۲۶. تب هفتم — تنظیمات و پروفایل
 # ═══════════════════════════════════════════════════════════════════════════
+
 with t7:
-    st.markdown("### ⚙️ پروفایل و تنظیمات سامانه")
+    st.markdown("### ⚙️ تنظیمات و پروفایل قهرمان")
 
-    st.markdown(f"""
-    <div class="glass-card">
-        <h3>دانش‌آموز گرامی: {USER_NAME}</h3>
-        <p style="color:#94a3b8;">نام کاربری سامانه: <code>{USERNAME}</code></p>
-        <p style="color:#94a3b8;">کل ساعات مطالعه ثبت‌شده: <b style="color:#38bdf8;">{df_all['study_hours'].sum():.1f} ساعت</b></p>
-        <p style="color:#94a3b8;">کل تست‌های حل‌شده: <b style="color:#4ade80;">{df_all['total_tests'].sum():,} تست</b></p>
-        <p style="color:#94a3b8;">امتیاز تجربه کل: <b style="color:#facc15;">{total_xp:,} XP</b> | رده: <span class="level-badge">{cur_lvl[2]} {cur_lvl[1]}</span></p>
-    </div>
-    """, unsafe_allow_html=True)
+    # ─── اطلاعات پروفایل ───
+    col_p1, col_p2 = st.columns([2, 1])
 
-    # دکمه خروجی اکسل کامل
+    with col_p1:
+        st.markdown(f"""
+        <div class="glass-card">
+            <h3 style="margin:0 0 18px 0; color:#38bdf8 !important;">
+                👤 پروفایل من
+            </h3>
+            <table style="width:100%; font-size:14px;">
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">نام:</td>
+                    <td style="padding:8px 0; font-weight:800;">
+                        {escape_html(USER_NAME)}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">نام کاربری:</td>
+                    <td style="padding:8px 0;">
+                        <code style="color:#38bdf8;
+                                     background:rgba(15,23,42,0.6);
+                                     padding:3px 10px; border-radius:6px;">
+                            {escape_html(USERNAME)}
+                        </code>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">سطح فعلی:</td>
+                    <td style="padding:8px 0;">
+                        <span style="color:{cur_lvl[3]};
+                                     font-weight:900; font-size:16px;">
+                            {cur_lvl[2]} {cur_lvl[1]}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">⚡ XP کل:</td>
+                    <td style="padding:8px 0; color:#facc15;
+                               font-weight:900;">
+                        {total_xp:,}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">🔥 زنجیره:</td>
+                    <td style="padding:8px 0; color:#fb923c;
+                               font-weight:900;">
+                        {streak} روز متوالی
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">
+                        📊 تعداد گزارش‌ها:
+                    </td>
+                    <td style="padding:8px 0; font-weight:900;">
+                        {len(df_all)}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0; color:#94a3b8;">
+                        🏆 مدال‌های باز‌شده:
+                    </td>
+                    <td style="padding:8px 0; color:#facc15;
+                               font-weight:900;">
+                        {len(get_unlocked_badges(USERNAME))} از {len(BADGES)}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_p2:
+        # ─── کارت خلاصه ───
+        st.markdown(f"""
+        <div class="glass-card" style="text-align:center;">
+            <div style="font-size:48px;">
+                {cur_lvl[2]}
+            </div>
+            <div style="font-size:18px; font-weight:900;
+                        color:{cur_lvl[3]}; margin-top:8px;">
+                {cur_lvl[1]}
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:8px;">
+                پیشرفت به {nxt_lvl[1] if nxt_lvl else "پایان"}
+            </div>
+            <div class="xp-track" style="height:16px; margin-top:12px;">
+                <div class="xp-fill"
+                     style="--target:{prog:.1f}%;
+                            width:{prog:.1f}%;"></div>
+            </div>
+            <div style="font-size:13px; color:#facc15;
+                        margin-top:8px; font-weight:800;">
+                {prog:.1f}%
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ آمار تفصیلی
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("#### 📊 آمار کلی حساب")
+
     if not df_all.empty:
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df_all.to_excel(writer, index=False, sheet_name='گزارشات_روزانه')
+        # بهترین و بدترین روز
+        best_study = df_all['study_hours'].max()
+        best_study_date = df_all.loc[df_all['study_hours'].idxmax(), 'report_date']
+        best_tests = df_all['total_tests'].max()
+        best_tests_date = df_all.loc[df_all['total_tests'].idxmax(), 'report_date']
+        first_date = df_all['report_date'].min()
+        last_date = df_all['report_date'].max()
+
+        # روزهای فعال
+        active_days = len(df_all)
+
+        # میانگین‌ها
+        avg_hours = df_all['study_hours'].mean()
+        avg_tests = df_all['total_tests'].mean()
+        avg_perc = df_all['percentage'].mean()
+        avg_sat = df_all['satisfaction'].mean()
+
+        stat_cols = st.columns(4)
+
+        with stat_cols[0]:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">🏆</span>
+                <div class="metric-num">{best_study:.1f}</div>
+                <div class="metric-txt">بهترین روز (ساعت)</div>
+                <div style="font-size:10px; color:#64748b;
+                            margin-top:4px;">
+                    {best_study_date}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with stat_cols[1]:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">⚡</span>
+                <div class="metric-num">{best_tests}</div>
+                <div class="metric-txt">بیشترین تست روزانه</div>
+                <div style="font-size:10px; color:#64748b;
+                            margin-top:4px;">
+                    {best_tests_date}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with stat_cols[2]:
+            days_active = (
+                pd.to_datetime(last_date) -
+                pd.to_datetime(first_date)
+            ).days + 1
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">📅</span>
+                <div class="metric-num">{active_days}</div>
+                <div class="metric-txt">روز فعال از {days_active} روز</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with stat_cols[3]:
+            st.markdown(f"""
+            <div class="metric-card">
+                <span class="metric-icon">📈</span>
+                <div class="metric-num">{avg_hours:.1f}</div>
+                <div class="metric-txt">میانگین ساعت روزانه</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ خروجی گرفتن از داده‌ها
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("#### 💾 پشتیبان‌گیری و خروجی")
+
+    if not df_all.empty:
+        # تبدیل به CSV
+        csv_data = df_all.to_csv(index=False).encode('utf-8-sig')
+
         st.download_button(
-            label="📥 دانلود کامل کارنامه به صورت اکسل (Excel)",
-            data=output.getvalue(),
-            file_name=f"Academy20_{USERNAME}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
+            label="📥 دانلود گزارش‌ها (CSV)",
+            data=csv_data,
+            file_name=f"academy20_reports_{USERNAME}_{datetime.date.today()}.csv",
+            mime="text/csv",
+            use_container_width=True,
         )
 
+    # ═══════════════════════════════════════════════════════════
+    # ▌ دکمه خروج
+    # ═══════════════════════════════════════════════════════════
     st.markdown("---")
-    if st.button("🚪 خروج امن از حساب کاربری", use_container_width=True):
-        st.session_state['logged_in'] = False
-        st.session_state['username'] = ''
-        st.session_state['name'] = ''
-        st.rerun()
+    st.markdown("#### 🚪 خروج از حساب کاربری")
+
+    col_exit1, col_exit2 = st.columns([1, 3])
+
+    with col_exit1:
+        if st.button("🚪 خروج از حساب", use_container_width=True):
+            # پاکسازی session
+            for k in ['logged_in', 'username', 'name', 'last_report']:
+                if k in st.session_state:
+                    st.session_state[k] = None if k == 'last_report' else False
+
+            st.session_state['logged_in'] = False
+            st.session_state['username'] = ''
+            st.session_state['name'] = ''
+
+            # پاکسازی مقادیر ساعت
+            keys_to_clear = [k for k in st.session_state.keys()
+                             if '_H' in k or '_M' in k or
+                             k.startswith('modal_open_')]
+            for k in keys_to_clear:
+                try:
+                    del st.session_state[k]
+                except Exception:
+                    pass
+
+            st.rerun()
+
+    with col_exit2:
+        st.caption(
+            "⚠️ توجه: داده‌های شما در دیتابیس محفوظ می‌مانند و "
+            "با ورود مجدد در دسترس خواهند بود."
+        )
+
+    # ═══════════════════════════════════════════════════════════
+    # ▌ اطلاعات فنی
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("---")
+
+    with st.expander("ℹ️ اطلاعات فنی برنامه"):
+        st.markdown(f"""
+        - **نسخه برنامه:** {APP_VERSION}
+        - **پایگاه داده:** SQLite (`{DB_FILE}`)
+        - **وضعیت Streamlit Dialog:** {"✅ فعال" if HAS_DIALOG else "❌ غیرفعال"}
+        - **وضعیت Streamlit Fragment:** {"✅ فعال" if HAS_FRAG else "❌ غیرفعال"}
+        - **پشتیبانی PIL:** {"✅ نصب" if HAS_PIL else "❌ نصب نیست"}
+        - **پشتیبانی RTL:** {"✅ نصب" if HAS_RTL else "❌ نصب نیست"}
+        - **تاریخ امروز:** {datetime.date.today()}
+        """)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
-# پایان برنامه — آکادمی ۲۰
+# ▌ ۲۷. فوتر سراسری
+# ═══════════════════════════════════════════════════════════════════════════
+
+st.markdown(f"""
+<div style="text-align:center; padding:30px 10px 20px 10px;
+            color:#64748b; font-size:12px; border-top:1px solid
+            rgba(56,189,248,0.15); margin-top:40px;">
+    <div style="font-size:14px; color:#38bdf8; font-weight:800;
+                margin-bottom:8px;">
+        👑 آکادمی ۲۰ — نسخه {APP_VERSION}
+    </div>
+    <div style="margin-bottom:6px;">
+        🎓 مشاور علمی: دکتر خشایار اشکبوس
+    </div>
+    <div style="margin-bottom:6px;">
+        📱 تلگرام: <a href="https://t.me/Kh_Ashkboos"
+                     style="color:#facc15; text-decoration:none;
+                            font-weight:700;">
+            @Kh_Ashkboos
+        </a>
+    </div>
+    <div style="color:#475569; font-size:11px; margin-top:12px;">
+        ساخته‌شده با ❤️ برای دانش‌آموزان کنکوری ایران
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ▌ پایان برنامه
 # ═══════════════════════════════════════════════════════════════════════════
