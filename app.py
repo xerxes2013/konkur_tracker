@@ -1068,7 +1068,7 @@ def init_database():
             username TEXT NOT NULL,
             nickname TEXT NOT NULL,
             joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (code, username),
+            UNIQUE(code, username),
             FOREIGN KEY (code) REFERENCES arena_rooms(code) ON DELETE CASCADE
         )
     ''')
